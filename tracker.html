@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DocuTimer: Work in Progress</title>
+    <title>DocuTimer: Tracker (Beta)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
@@ -13,38 +13,74 @@
             flex-direction: column;
             justify-content: space-between;
         }
-        .pulse {
-            animation: pulse 2s infinite;
-        }
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); }
-        }
-        .progress-bar {
-            background: linear-gradient(to right, #4ade80, #22c55e);
-        }
-        .header-image {
-            max-width: 600px;
+        /* shadcn-inspired styles */
+        .input, .select {
+            background-color: #1f2937;
+            border: 1px solid #4b5563;
+            color: white;
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.375rem;
             width: 100%;
-            height: auto;
-            margin: 0 auto;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .input:focus, .select:focus {
+            border-color: #22c55e;
+            box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.2);
+        }
+        .input::placeholder {
+            color: #9ca3af;
+        }
+        .label {
+            color: #e5e7eb;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.25rem;
             display: block;
         }
-        table {
+        .button {
+            background-color: #22c55e;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+        .button:hover {
+            background-color: #16a34a;
+        }
+        .radio-group {
+            display: flex;
+            gap: 1rem;
+        }
+        .radio-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #e5e7eb;
+        }
+        .radio {
+            accent-color: #22c55e;
+        }
+        .table {
             width: 100%;
             border-collapse: collapse;
+            background-color: #1f2937;
+            border-radius: 0.375rem;
+            overflow: hidden;
         }
-        th, td {
+        .table th, .table td {
             padding: 0.75rem;
             text-align: left;
             border-bottom: 1px solid #4b5563;
         }
-        th {
+        .table th {
             background-color: #374151;
+            color: #e5e7eb;
+            font-weight: 600;
         }
-        td {
-            background-color: #1f2937;
+        .table td {
+            color: #d1d5db;
         }
     </style>
 </head>
@@ -52,40 +88,22 @@
     <!-- Header -->
     <header class="p-6">
         <h1 class="text-4xl font-bold text-center">DocuTimer</h1>
-        <p class="text-lg text-center mt-2">Track Document Expirations & Subscription Renewals</p>
-        <img src="https://raw.githubusercontent.com/ThinkCode/docutimer/refs/heads/main/image.jpg" alt="DocuTimer Header Image" class="header-image mt-4">
+        <p class="text-lg text-center mt-2">Tracker (Beta)</p>
+        <p class="text-center mt-2">
+            <a href="index.html" class="underline hover:text-green-400">Back to Home</a>
+        </p>
     </header>
 
     <!-- Main Content -->
     <main class="flex flex-col items-center justify-center flex-grow px-4">
-        <div class="text-center max-w-2xl">
-            <h2 class="text-3xl font-semibold mb-4">Coming Soon!</h2>
-            <p class="text-lg mb-6">
-                <span class="font-bold">DocuTimer</span> is in the works! Effortlessly manage document expiration dates and subscription renewals with timely reminders to keep you organized and stress-free.
-            </p>
-            <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
-                <h3 class="text-xl font-medium mb-4">Estimated Launch</h3>
-                <div id="countdown" class="text-2xl font-mono mb-4">Calculating...</div>
-                <div class="w-full bg-gray-600 rounded-full h-4">
-                    <div id="progress-bar" class="progress-bar h-4 rounded-full" style="width: 0%"></div>
-                </div>
-            </div>
-            <p class="mt-6 text-lg">Want updates on our launch? Join our list!</p>
-            <div class="mt-4 flex justify-center">
-                <input type="email" id="email-input" placeholder="Enter your email" class="p-2 rounded-l-md text-black focus:outline-none">
-                <button id="subscribe-btn" class="bg-green-500 hover:bg-green-600 p-2 rounded-r-md pulse">Notify Me</button>
-            </div>
-            <p id="subscribe-message" class="mt-2 text-sm"></p>
-        </div>
-
         <!-- Tracking Form Section -->
-        <section class="mt-12 w-full max-w-4xl">
+        <section class="w-full max-w-4xl">
             <h2 class="text-2xl font-semibold text-center mb-6">Track Your Documents & Subscriptions</h2>
             <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label for="doc-type" class="block text-sm font-medium mb-1">Document/Subscription</label>
-                        <select id="doc-type" class="w-full p-2 rounded-md text-black">
+                        <label for="doc-type" class="label">Document/Subscription</label>
+                        <select id="doc-type" class="select">
                             <option value="Passport" data-type="document">Passport</option>
                             <option value="Drivers License" data-type="document">Drivers License</option>
                             <option value="Tesla Insurance" data-type="subscription">Tesla Insurance</option>
@@ -112,47 +130,47 @@
                         </select>
                     </div>
                     <div id="other-type-container" class="hidden">
-                        <label for="other-type" class="block text-sm font-medium mb-1">Custom Type</label>
-                        <input type="text" id="other-type" placeholder="Enter custom type" class="w-full p-2 rounded-md text-black">
+                        <label for="other-type" class="label">Custom Type</label>
+                        <input type="text" id="other-type" placeholder="Enter custom type" class="input">
                         <div class="mt-2">
-                            <label class="block text-sm font-medium mb-1">Type</label>
-                            <div class="flex items-center gap-4">
-                                <label><input type="radio" name="type-selection" value="document" class="mr-1"> Document</label>
-                                <label><input type="radio" name="type-selection" value="subscription" class="mr-1"> Subscription</label>
+                            <label class="label">Type</label>
+                            <div class="radio-group">
+                                <label class="radio-label"><input type="radio" name="type-selection" value="document" class="radio"> Document</label>
+                                <label class="radio-label"><input type="radio" name="type-selection" value="subscription" class="radio"> Subscription</label>
                             </div>
                         </div>
                     </div>
                     <div id="description-field">
-                        <label for="description" class="block text-sm font-medium mb-1">Description</label>
-                        <input type="text" id="description" placeholder="e.g., India, Oregon" class="w-full p-2 rounded-md text-black">
+                        <label for="description" class="label">Description</label>
+                        <input type="text" id="description" placeholder="e.g., India, Oregon" class="input">
                     </div>
                     <div id="cost-field" class="hidden">
-                        <label for="cost" class="block text-sm font-medium mb-1">Cost</label>
-                        <input type="text" id="cost" placeholder="e.g., $7" class="w-full p-2 rounded-md text-black">
+                        <label for="cost" class="label">Cost</label>
+                        <input type="text" id="cost" placeholder="e.g., $7" class="input">
                     </div>
                     <div id="frequency-field" class="hidden">
-                        <label for="frequency" class="block text-sm font-medium mb-1">Monthly/Yearly</label>
-                        <select id="frequency" class="w-full p-2 rounded-md text-black">
+                        <label for="frequency" class="label">Monthly/Yearly</label>
+                        <select id="frequency" class="select">
                             <option value="">-- Select --</option>
                             <option value="Monthly">Monthly</option>
                             <option value="Yearly">Yearly</option>
                         </select>
                     </div>
                     <div id="start-date-field">
-                        <label for="start-date" class="block text-sm font-medium mb-1">Issued/Start Date</label>
-                        <input type="date" id="start-date" class="w-full p-2 rounded-md text-black">
+                        <label for="start-date" class="label">Issued/Start Date</label>
+                        <input type="date" id="start-date" class="input">
                     </div>
                     <div id="end-date-field">
-                        <label for="end-date" class="block text-sm font-medium mb-1">Renewal/Expiration Date</label>
-                        <input type="date" id="end-date" class="w-full p-2 rounded-md text-black">
+                        <label for="end-date" class="label">Renewal/Expiration Date</label>
+                        <input type="date" id="end-date" class="input">
                     </div>
                 </div>
-                <button id="add-entry-btn" class="mt-6 w-full bg-green-500 hover:bg-green-600 p-2 rounded-md pulse">Add Entry</button>
+                <button id="add-entry-btn" class="mt-6 w-full button">Add Entry</button>
             </div>
 
             <!-- Table to Display Entries -->
             <div class="mt-8">
-                <table id="entries-table">
+                <table class="table">
                     <thead>
                         <tr>
                             <th>Document/Subscription</th>
@@ -179,58 +197,6 @@
 
     <!-- JavaScript -->
     <script>
-        // Countdown Timer
-        const launchDate = new Date('2025-12-31T23:59:59');
-        const countdownElement = document.getElementById('countdown');
-        const progressBar = document.getElementById('progress-bar');
-        const startDate = new Date('2025-04-26');
-        const totalDays = (launchDate - startDate) / (1000 * 60 * 60 * 24);
-
-        function updateCountdown() {
-            const now = new Date();
-            const timeLeft = launchDate - now;
-            if (timeLeft <= 0) {
-                countdownElement.textContent = 'Launched!';
-                progressBar.style.width = '100%';
-                return;
-            }
-
-            const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
-
-            countdownElement.textContent = `${days}d ${hours}h ${minutes}m ${seconds}s`;
-
-            const daysPassed = (now - startDate) / (1000 * 60 * 60 * 24);
-            const progress = Math.min((daysPassed / totalDays) * 100, 100);
-            progressBar.style.width = `${progress}%`;
-        }
-
-        setInterval(updateCountdown, 1000);
-        updateCountdown();
-
-        // Subscription Button
-        const subscribeBtn = document.getElementById('subscribe-btn');
-        const emailInput = document.getElementById('email-input');
-        const subscribeMessage = document.getElementById('subscribe-message');
-
-        subscribeBtn.addEventListener('click', () => {
-            const email = emailInput.value.trim();
-            if (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-                subscribeMessage.textContent = 'Thanks for signing up! We’ll keep you posted.';
-                subscribeMessage.classList.add('text-green-400');
-                emailInput.value = '';
-            } else {
-                subscribeMessage.textContent = 'Please enter a valid email address.';
-                subscribeMessage.classList.add('text-red-400');
-            }
-            setTimeout(() => {
-                subscribeMessage.textContent = '';
-                subscribeMessage.classList.remove('text-green-400', 'text-red-400');
-            }, 3000);
-        });
-
         // Tracking Form
         const docTypeSelect = document.getElementById('doc-type');
         const otherTypeContainer = document.getElementById('other-type-container');
@@ -291,7 +257,7 @@
         }
 
         docTypeSelect.addEventListener('change', updateFormFields);
-        updateFormFields(); // Initial call
+        updateFormFields();
 
         // Add new entry
         addEntryBtn.addEventListener('click', () => {
