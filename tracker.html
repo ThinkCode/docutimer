@@ -105,6 +105,18 @@
         .currency-select {
             width: 100px;
         }
+        /* Ensure dropdown width matches text field in Safari */
+        .select, .currency-select {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            width: 100%;
+            max-width: 100%;
+        }
+        .currency-container .currency-select {
+            width: 100px;
+            max-width: 100px;
+        }
     </style>
 </head>
 <body class="text-white font-sans">
@@ -446,15 +458,23 @@
             currencySelect.appendChild(option);
         });
 
-        // Store entries for duplicate checking
-        let entries = [
+        // Default entries
+        const defaultEntries = [
             { type: 'Passport', description: 'India', cost: '', currency: '', frequency: '', startDate: '2024-04-02', endDate: '2028-04-04', isDocument: true },
             { type: 'Drivers License', description: 'Oregon', cost: '', currency: '', frequency: '', startDate: '2024-04-02', endDate: '2028-04-04', isDocument: true },
             { type: 'Netflix', description: '', cost: '7', currency: 'USD', frequency: 'Monthly', startDate: '2024-04-26', endDate: '2025-04-26', isDocument: false }
         ];
 
+        // Load entries from localStorage or use default entries
+        let entries = JSON.parse(localStorage.getItem('docutimerEntries')) || defaultEntries;
+
+        // Save entries to localStorage
+        function saveEntries() {
+            localStorage.setItem('docutimerEntries', JSON.stringify(entries));
+        }
+
         // Load sample data on page load
-        entries.forEach(entry => addEntryToTable(entry));
+        entries.forEach((entry, index) => addEntryToTable(entry, index));
 
         // Show/hide fields based on selection
         function updateFormFields() {
@@ -626,12 +646,16 @@
             // Update or add entry
             if (!isNaN(editIndex) && editIndex >= 0) {
                 entries[editIndex] = entry;
-                entriesTbody.innerHTML = '';
-                entries.forEach(entry => addEntryToTable(entry));
             } else {
                 entries.push(entry);
-                addEntryToTable(entry);
             }
+
+            // Save to localStorage
+            saveEntries();
+
+            // Re-render table
+            entriesTbody.innerHTML = '';
+            entries.forEach((entry, index) => addEntryToTable(entry, index));
 
             clearForm();
         });
@@ -683,6 +707,7 @@
             row.querySelector('.delete-button').addEventListener('click', () => {
                 if (confirm('Are you sure you want to delete this entry?')) {
                     entries.splice(index, 1);
+                    saveEntries();
                     entriesTbody.innerHTML = '';
                     entries.forEach((entry, i) => addEntryToTable(entry, i));
                 }
