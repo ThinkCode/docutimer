@@ -94,6 +94,12 @@
         .table td {
             color: #d1d5db;
         }
+        .expense {
+            color: rgba(239, 68, 68, 0.7); /* Faint red for outgoing money */
+        }
+        .earning {
+            color: rgba(34, 197, 94, 0.7); /* Faint green for earnings */
+        }
         .error {
             border-color: #ef4444 !important;
             box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2) !important;
@@ -104,6 +110,7 @@
         }
         .currency-select {
             width: 100px;
+            max-width: 100px;
         }
         /* Ensure dropdown width matches text field in Safari */
         .select, .currency-select {
@@ -116,6 +123,26 @@
         .currency-container .currency-select {
             width: 100px;
             max-width: 100px;
+        }
+        /* Fix form layout to ensure one row per field */
+        .form-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .form-row {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .form-row.md-row {
+            flex-direction: row;
+            gap: 1rem;
+        }
+        @media (min-width: 768px) {
+            .form-row.md-row > * {
+                flex: 1;
+            }
         }
     </style>
 </head>
@@ -135,74 +162,93 @@
         <section class="w-full max-w-4xl">
             <h2 class="text-2xl font-semibold text-center mb-6">Track Your Documents & Subscriptions</h2>
             <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label for="doc-type" class="label">Document/Subscription</label>
-                        <select id="doc-type" class="select">
-                            <option value="Passport" data-type="document">Passport</option>
-                            <option value="Drivers License" data-type="document">Drivers License</option>
-                            <option value="Tesla Insurance" data-type="subscription">Tesla Insurance</option>
-                            <option value="Tesla Lease" data-type="subscription">Tesla Lease</option>
-                            <option value="Tesla Premium" data-type="subscription">Tesla Premium</option>
-                            <option value="Tesla FSD" data-type="subscription">Tesla FSD</option>
-                            <option value="Apple iCloud" data-type="subscription">Apple iCloud</option>
-                            <option value="Google Drive" data-type="subscription">Google Drive</option>
-                            <option value="Blinkist" data-type="subscription">Blinkist</option>
-                            <option value="Adobe Creative Cloud LR PS" data-type="subscription">Adobe Creative Cloud LR PS</option>
-                            <option value="Amex Annual Fee" data-type="subscription">Amex Annual Fee</option>
-                            <option value="Alaska" data-type="subscription">Alaska</option>
-                            <option value="VentureX" data-type="subscription">VentureX</option>
-                            <option value="Netflix" data-type="subscription">Netflix</option>
-                            <option value="Prime" data-type="subscription">Prime</option>
-                            <option value="Aha" data-type="subscription">Aha</option>
-                            <option value="YouTube Premium" data-type="subscription">YouTube Premium</option>
-                            <option value="Coursera" data-type="subscription">Coursera</option>
-                            <option value="LinkedIn Premium" data-type="subscription">LinkedIn Premium</option>
-                            <option value="Apple Fitness Plus" data-type="subscription">Apple Fitness Plus</option>
-                            <option value="Xbox Gamepass" data-type="subscription">Xbox Gamepass</option>
-                            <option value="Whoop" data-type="subscription">Whoop</option>
-                            <option value="Other" data-type="other">Other</option>
-                        </select>
-                    </div>
-                    <div id="other-type-container" class="hidden">
-                        <label for="other-type" class="label">Custom Type</label>
-                        <input type="text" id="other-type" placeholder="Enter custom type" class="input">
-                        <div class="mt-2">
-                            <label class="label">Type</label>
-                            <div class="radio-group">
-                                <label class="radio-label"><input type="radio" name="type-selection" value="document" class="radio"> Document</label>
-                                <label class="radio-label"><input type="radio" name="type-selection" value="subscription" class="radio"> Subscription</label>
+                <div class="form-grid">
+                    <div class="form-row md-row">
+                        <div>
+                            <label for="doc-type" class="label">Document/Subscription</label>
+                            <select id="doc-type" class="select">
+                                <option value="Passport" data-type="document">Passport</option>
+                                <option value="Drivers License" data-type="document">Drivers License</option>
+                                <option value="Tesla Insurance" data-type="subscription">Tesla Insurance</option>
+                                <option value="Tesla Lease" data-type="subscription">Tesla Lease</option>
+                                <option value="Tesla Premium" data-type="subscription">Tesla Premium</option>
+                                <option value="Tesla FSD" data-type="subscription">Tesla FSD</option>
+                                <option value="Apple iCloud" data-type="subscription">Apple iCloud</option>
+                                <option value="Google Drive" data-type="subscription">Google Drive</option>
+                                <option value="Blinkist" data-type="subscription">Blinkist</option>
+                                <option value="Adobe Creative Cloud LR PS" data-type="subscription">Adobe Creative Cloud LR PS</option>
+                                <option value="Amex Annual Fee" data-type="subscription">Amex Annual Fee</option>
+                                <option value="Alaska" data-type="subscription">Alaska</option>
+                                <option value="VentureX" data-type="subscription">VentureX</option>
+                                <option value="Netflix" data-type="subscription">Netflix</option>
+                                <option value="Prime" data-type="subscription">Prime</option>
+                                <option value="Aha" data-type="subscription">Aha</option>
+                                <option value="YouTube Premium" data-type="subscription">YouTube Premium</option>
+                                <option value="Coursera" data-type="subscription">Coursera</option>
+                                <option value="LinkedIn Premium" data-type="subscription">LinkedIn Premium</option>
+                                <option value="Apple Fitness Plus" data-type="subscription">Apple Fitness Plus</option>
+                                <option value="Xbox Gamepass" data-type="subscription">Xbox Gamepass</option>
+                                <option value="Whoop" data-type="subscription">Whoop</option>
+                                <option value="Rental Lease" data-type="subscription">Rental Lease</option>
+                                <option value="Paycheck" data-type="subscription">Paycheck</option>
+                                <option value="Other" data-type="other">Other</option>
+                            </select>
+                        </div>
+                        <div id="other-type-container" class="hidden">
+                            <label for="other-type" class="label">Custom Type</label>
+                            <input type="text" id="other-type" placeholder="Enter custom type" class="input">
+                            <div class="mt-2">
+                                <label class="label">Type</label>
+                                <div class="radio-group">
+                                    <label class="radio-label"><input type="radio" name="type-selection" value="document" class="radio"> Document</label>
+                                    <label class="radio-label"><input type="radio" name="type-selection" value="subscription" class="radio"> Subscription</label>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <div id="description-field">
-                        <label for="description" class="label">Description</label>
-                        <input type="text" id="description" placeholder="e.g., India, Oregon" class="input">
-                    </div>
-                    <div id="cost-field" class="hidden">
-                        <label for="cost" class="label">Cost</label>
-                        <div class="currency-container">
-                            <select id="currency" class="select currency-select">
-                                <!-- Populated dynamically -->
-                            </select>
-                            <input type="text" id="cost" placeholder="e.g., 7" class="input">
+                    <div class="form-row">
+                        <div id="description-field">
+                            <label for="description" class="label">Description</label>
+                            <input type="text" id="description" placeholder="e.g., India, Oregon" class="input">
                         </div>
                     </div>
-                    <div id="frequency-field" class="hidden">
-                        <label for="frequency" class="label">Monthly/Yearly</label>
-                        <select id="frequency" class="select">
-                            <option value="">-- Select --</option>
-                            <option value="Monthly">Monthly</option>
-                            <option value="Yearly">Yearly</option>
-                        </select>
+                    <div class="form-row">
+                        <div>
+                            <label class="label">Transaction Type</label>
+                            <div class="radio-group">
+                                <label class="radio-label"><input type="radio" name="transaction-type" value="expense" class="radio" checked> Expense (Outgoing)</label>
+                                <label class="radio-label"><input type="radio" name="transaction-type" value="earning" class="radio"> Earning (Incoming)</label>
+                            </div>
+                        </div>
                     </div>
-                    <div id="start-date-field">
-                        <label for="start-date" class="label">Issued/Start Date</label>
-                        <input type="date" id="start-date" class="input">
+                    <div class="form-row md-row">
+                        <div id="cost-field" class="hidden">
+                            <label for="cost" class="label">Cost</label>
+                            <div class="currency-container">
+                                <select id="currency" class="select currency-select">
+                                    <!-- Populated dynamically -->
+                                </select>
+                                <input type="text" id="cost" placeholder="e.g., 7" class="input">
+                            </div>
+                        </div>
+                        <div id="frequency-field" class="hidden">
+                            <label for="frequency" class="label">Monthly/Yearly</label>
+                            <select id="frequency" class="select">
+                                <option value="">-- Select --</option>
+                                <option value="Monthly">Monthly</option>
+                                <option value="Yearly">Yearly</option>
+                            </select>
+                        </div>
                     </div>
-                    <div id="end-date-field">
-                        <label for="end-date" class="label">Renewal/Expiration Date</label>
-                        <input type="date" id="end-date" class="input">
+                    <div class="form-row md-row">
+                        <div id="start-date-field">
+                            <label for="start-date" class="label">Issued/Start Date</label>
+                            <input type="date" id="start-date" class="input">
+                        </div>
+                        <div id="end-date-field">
+                            <label for="end-date" class="label">Renewal/Expiration Date</label>
+                            <input type="date" id="end-date" class="input">
+                        </div>
                     </div>
                 </div>
                 <button id="add-entry-btn" class="mt-6 w-full button">Add Entry</button>
@@ -243,6 +289,7 @@
         const otherTypeContainer = document.getElementById('other-type-container');
         const otherTypeInput = document.getElementById('other-type');
         const typeRadios = document.getElementsByName('type-selection');
+        const transactionRadios = document.getElementsByName('transaction-type');
         const descriptionField = document.getElementById('description-field');
         const costField = document.getElementById('cost-field');
         const frequencyField = document.getElementById('frequency-field');
@@ -259,181 +306,6 @@
         const startDateInput = document.getElementById('start-date');
         const endDateInput = document.getElementById('end-date');
 
-        // Currency list from gist
-        const currencies = {
-            "AED": "United Arab Emirates Dirham",
-            "AFN": "Afghan Afghani",
-            "ALL": "Albanian Lek",
-            "AMD": "Armenian Dram",
-            "ANG": "Netherlands Antillean Guilder",
-            "AOA": "Angolan Kwanza",
-            "ARS": "Argentine Peso",
-            "AUD": "Australian Dollar",
-            "AWG": "Aruban Florin",
-            "AZN": "Azerbaijani Manat",
-            "BAM": "Bosnia-Herzegovina Convertible Mark",
-            "BBD": "Barbadian Dollar",
-            "BDT": "Bangladeshi Taka",
-            "BGN": "Bulgarian Lev",
-            "BHD": "Bahraini Dinar",
-            "BIF": "Burundian Franc",
-            "BMD": "Bermudian Dollar",
-            "BND": "Brunei Dollar",
-            "BOB": "Bolivian Boliviano",
-            "BRL": "Brazilian Real",
-            "BSD": "Bahamian Dollar",
-            "BTC": "Bitcoin",
-            "BTN": "Bhutanese Ngultrum",
-            "BWP": "Botswana Pula",
-            "BYN": "Belarusian Rubles",
-            "BZD": "Belize Dollar",
-            "CAD": "Canadian Dollar",
-            "CDF": "Congolese Franc",
-            "CHF": "Swiss Franc",
-            "CLF": "Chilean Unit of Account (UF)",
-            "CLP": "Chilean Peso",
-            "CNH": "Chinese Yuan (Offshore)",
-            "CNY": "Chinese Yuan",
-            "COP": "Colombian Peso",
-            "CRC": "Costa Rican Colón",
-            "CUC": "Cuban Convertible Peso",
-            "CUP": "Cuban Peso",
-            "CVE": "Cape Verdean Escudo",
-            "CZK": "Czech Koruna",
-            "DJF": "Djiboutian Franc",
-            "DKK": "Danish Krone",
-            "DOP": "Dominican Peso",
-            "DZD": "Algerian Dinar",
-            "EGP": "Egyptian Pound",
-            "ERN": "Eritrean Nakfa",
-            "ETB": "Ethiopian Birr",
-            "EUR": "Euro",
-            "FJD": "Fijian Dollar",
-            "FKP": "Falkland Islands Pound",
-            "GBP": "British Pound Sterling",
-            "GEL": "Georgian Lari",
-            "GGP": "Guernsey Pound",
-            "GHS": "Ghanaian Cedi",
-            "GIP": "Gibraltar Pound",
-            "GMD": "Gambian Dalasi",
-            "GNF": "Guinean Franc",
-            "GTQ": "Guatemalan Quetzal",
-            "GYD": "Guyanese Dollar",
-            "HKD": "Hong Kong Dollar",
-            "HNL": "Honduran Lempira",
-            "HRK": "Croatian Kuna",
-            "HTG": "Haitian Gourde",
-            "HUF": "Hungarian Forint",
-            "IDR": "Indonesian Rupiah",
-            "ILS": "Israeli New Shekel",
-            "IMP": "Manx pound",
-            "INR": "Indian Rupee",
-            "IQD": "Iraqi Dinar",
-            "IRR": "Iranian Rial",
-            "ISK": "Icelandic Króna",
-            "JEP": "Jersey Pound",
-            "JMD": "Jamaican Dollar",
-            "JOD": "Jordanian Dinar",
-            "JPY": "Japanese Yen",
-            "KES": "Kenyan Shilling",
-            "KGS": "Kyrgyzstani Som",
-            "KHR": "Cambodian Riel",
-            "KMF": "Comorian Franc",
-            "KPW": "North Korean Won",
-            "KRW": "South Korean Won",
-            "KWD": "Kuwaiti Dinar",
-            "KYD": "Cayman Islands Dollar",
-            "KZT": "Kazakhstani Tenge",
-            "LAK": "Lao Kip",
-            "LBP": "Lebanese Pound",
-            "LKR": "Sri Lankan Rupee",
-            "LRD": "Liberian Dollar",
-            "LSL": "Lesotho Loti",
-            "LYD": "Libyan Dinar",
-            "MAD": "Moroccan Dirham",
-            "MDL": "Moldovan Leu",
-            "MGA": "Malagasy Ariary",
-            "MKD": "Macedonian Denar",
-            "MMK": "Burmese Kyat",
-            "MNT": "Mongolian Tögrög",
-            "MOP": "Macanese Pataca",
-            "MRO": "Mauritanian Ouguiya (pre-2018)",
-            "MRU": "Mauritanian Ouguiya",
-            "MUR": "Mauritian Rupee",
-            "MVR": "Maldivian Rufiyaa",
-            "MWK": "Malawian Kwacha",
-            "MXN": "Mexican Peso",
-            "MYR": "Malaysian Ringgit",
-            "MZN": "Mozambican Metical",
-            "NAD": "Namibian Dollar",
-            "NGN": "Nigerian Naira",
-            "NIO": "Nicaraguan Córdoba",
-            "NOK": "Norwegian Krone",
-            "NPR": "Nepalese Rupee",
-            "NZD": "New Zealand Dollar",
-            "OMR": "Omani Rial",
-            "PAB": "Panamanian Balboa",
-            "PEN": "Peruvian Sol",
-            "PGK": "Papua New Guinean Kina",
-            "PHP": "Philippine Peso",
-            "PKR": "Pakistani Rupee",
-            "PLN": "Polish Złoty",
-            "PYG": "Paraguayan Guarani",
-            "QAR": "Qatari Riyal",
-            "RON": "Romanian Leu",
-            "RSD": "Serbian Dinar",
-            "RUB": "Russian Rubles",
-            "RWF": "Rwandan Franc",
-            "SAR": "Saudi Riyal",
-            "SBD": "Solomon Islands Dollar",
-            "SCR": "Seychellois Rupee",
-            "SDG": "Sudanese Pound",
-            "SEK": "Swedish Krona",
-            "SGD": "Singapore Dollar",
-            "SHP": "Saint Helena Pound",
-            "SLL": "Sierra Leonean Leone",
-            "SOS": "Somali Shilling",
-            "SRD": "Surinamese Dollar",
-            "SSP": "South Sudanese Pound",
-            "STD": "São Tomé and Príncipe Dobra (pre-2018)",
-            "STN": "São Tomé and Príncipe Dobra",
-            "SVC": "Salvadoran Colón",
-            "SYP": "Syrian Pound",
-            "SZL": "Swazi Lilangeni",
-            "THB": "Thai Baht",
-            "TJS": "Tajikistani Somoni",
-            "TMT": "Turkmenistan Manat",
-            "TND": "Tunisian Dinar",
-            "TOP": "Tongan Paʻanga",
-            "TRY": "Turkish Lira",
-            "TTD": "Trinidad and Tobago Dollar",
-            "TWD": "New Taiwan Dollar",
-            "TZS": "Tanzanian Shilling",
-            "UAH": "Ukrainian Hryvnia",
-            "UGX": "Ugandan Shilling",
-            "USD": "United States Dollar",
-            "UYU": "Uruguayan Peso",
-            "UZS": "Uzbekistani Soʻm",
-            "VEF": "Venezuelan Bolívar (pre-2018)",
-            "VES": "Venezuelan Bolívar",
-            "VND": "Vietnamese Đồng",
-            "VUV": "Vanuatu Vatu",
-            "WST": "Samoan Tala",
-            "XAF": "Central African CFA Franc",
-            "XAG": "Silver (troy ounce)",
-            "XAU": "Gold (troy ounce)",
-            "XCD": "Eastern Caribbean Dollar",
-            "XDR": "Special Drawing Rights",
-            "XOF": "West African CFA Franc",
-            "XPD": "Palladium (troy ounce)",
-            "XPF": "CFP Franc",
-            "XPT": "Platinum (troy ounce)",
-            "YER": "Yemeni Rial",
-            "ZAR": "South African Rand",
-            "ZMW": "Zambian Kwacha",
-            "ZWL": "Zimbabwean Dollar"
-        };
-
         // Currency symbol mapping for common currencies
         const currencySymbols = {
             "USD": "$",
@@ -445,12 +317,11 @@
             "CHF": "Fr",
             "CNY": "¥",
             "INR": "₹",
-            "BRL": "R$",
-            // Fallback to code if no symbol defined
+            "BRL": "R$"
         };
 
-        // Populate currency dropdown
-        Object.keys(currencies).forEach(code => {
+        // Populate currency dropdown with only common currencies
+        Object.keys(currencySymbols).forEach(code => {
             const option = document.createElement('option');
             option.value = code;
             option.textContent = code;
@@ -460,9 +331,11 @@
 
         // Default entries
         const defaultEntries = [
-            { type: 'Passport', description: 'India', cost: '', currency: '', frequency: '', startDate: '2024-04-02', endDate: '2028-04-04', isDocument: true },
-            { type: 'Drivers License', description: 'Oregon', cost: '', currency: '', frequency: '', startDate: '2024-04-02', endDate: '2028-04-04', isDocument: true },
-            { type: 'Netflix', description: '', cost: '7', currency: 'USD', frequency: 'Monthly', startDate: '2024-04-26', endDate: '2025-04-26', isDocument: false }
+            { type: 'Passport', description: 'India', cost: '', currency: '', frequency: '', startDate: '2024-04-02', endDate: '2028-04-04', isDocument: true, transactionType: 'expense' },
+            { type: 'Drivers License', description: 'Oregon', cost: '', currency: '', frequency: '', startDate: '2024-04-02', endDate: '2028-04-04', isDocument: true, transactionType: 'expense' },
+            { type: 'Netflix', description: '', cost: '7', currency: 'USD', frequency: 'Monthly', startDate: '2024-04-26', endDate: '2025-04-26', isDocument: false, transactionType: 'expense' },
+            { type: 'Amex Annual Fee', description: '', cost: '99', currency: 'USD', frequency: 'Monthly', startDate: '2025-04-30', endDate: '2025-08-30', isDocument: false, transactionType: 'expense' },
+            { type: 'Rental Lease', description: 'Property 1', cost: '45000', currency: 'INR', frequency: 'Yearly', startDate: '2025-04-28', endDate: '2025-08-28', isDocument: false, transactionType: 'earning' }
         ];
 
         // Load entries from localStorage or use default entries
@@ -524,6 +397,7 @@
             docTypeSelect.value = 'Passport';
             otherTypeInput.value = '';
             typeRadios.forEach(radio => radio.checked = false);
+            transactionRadios.forEach(radio => radio.checked = radio.value === 'expense');
             descriptionInput.value = '';
             costInput.value = '';
             currencySelect.value = 'USD';
@@ -578,6 +452,7 @@
             const frequency = frequencySelect.value;
             const startDate = startDateInput.value;
             const endDate = endDateInput.value;
+            const transactionType = document.querySelector('input[name="transaction-type"]:checked')?.value;
 
             // Strip currency symbols from cost
             if (cost) {
@@ -618,6 +493,10 @@
                     hasError = true;
                 }
             }
+            if (!transactionType) {
+                alert('Please select whether this is an Expense or Earning.');
+                hasError = true;
+            }
 
             if (hasError) {
                 alert('Please correct the highlighted fields.');
@@ -632,7 +511,8 @@
                 frequency: isDocument ? '' : frequency,
                 startDate: startDate,
                 endDate: endDate,
-                isDocument: isDocument
+                isDocument: isDocument,
+                transactionType: transactionType
             };
 
             const editIndex = parseInt(addEntryBtn.dataset.index, 10);
@@ -663,10 +543,11 @@
         function addEntryToTable(entry, index) {
             const row = document.createElement('tr');
             const costDisplay = entry.cost && entry.currency ? `${currencySymbols[entry.currency] || entry.currency} ${entry.cost}` : '';
+            const costClass = entry.transactionType === 'expense' ? 'expense' : 'earning';
             row.innerHTML = `
                 <td>${entry.type}</td>
                 <td>${entry.description}</td>
-                <td>${costDisplay}</td>
+                <td class="${costClass}">${costDisplay}</td>
                 <td>${entry.frequency}</td>
                 <td>${entry.startDate}</td>
                 <td>${entry.endDate}</td>
@@ -679,7 +560,7 @@
 
             // Add event listeners for edit and delete buttons
             row.querySelector('.edit-button').addEventListener('click', () => {
-                clearErrors(); // Clear any existing validation errors
+                clearErrors();
                 const entry = entries[index];
                 docTypeSelect.value = entry.type;
                 descriptionInput.value = entry.description;
@@ -688,6 +569,8 @@
                 frequencySelect.value = entry.frequency;
                 startDateInput.value = entry.startDate;
                 endDateInput.value = entry.endDate;
+                const transactionRadio = Array.from(transactionRadios).find(r => r.value === entry.transactionType);
+                if (transactionRadio) transactionRadio.checked = true;
 
                 // Handle custom types
                 if (!Array.from(docTypeSelect.options).some(option => option.value === entry.type)) {
