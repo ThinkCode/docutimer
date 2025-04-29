@@ -655,6 +655,7 @@
 
             // Add event listeners for edit and delete buttons
             row.querySelector('.edit-button').addEventListener('click', () => {
+                clearErrors(); // Clear any existing validation errors
                 const entry = entries[index];
                 docTypeSelect.value = entry.type;
                 descriptionInput.value = entry.description;
