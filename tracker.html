@@ -63,19 +63,6 @@
     .delete-button:hover {
         background-color: #dc2626;
     }
-    .radio-group {
-        display: flex;
-        gap: 1rem;
-    }
-    .radio-label {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        color: #e5e7eb;
-    }
-    .radio {
-        accent-color: #22c55e;
-    }
     .table {
         width: 100%;
         border-collapse: collapse;
@@ -218,11 +205,11 @@
                             <input type="text" id="description" placeholder="e.g., India, Oregon" class="input">
                         </div>
                     </div>
-                    <div class="form-row">
+                    <div class="form-row" id="transaction-type-row">
                         <div>
                             <label class="label">Transaction Type</label>
                             <div class="radio-group">
-                                <label class="radio-label"><input type="radio" name="transaction-type" value="expense" class="radio" checked> Expense (Outgoing)</label>
+                                <label class="radio-label"><input type="radio" name="transaction-type" value="expense" class="radio"> Expense (Outgoing)</label>
                                 <label class="radio-label"><input type="radio" name="transaction-type" value="earning" class="radio"> Earning (Incoming)</label>
                             </div>
                         </div>
@@ -294,6 +281,7 @@
     const otherTypeInput = document.getElementById('other-type');
     const typeRadios = document.getElementsByName('type-selection');
     const transactionRadios = document.getElementsByName('transaction-type');
+    const transactionTypeRow = document.getElementById('transaction-type-row');
     const descriptionField = document.getElementById('description-field');
     const costField = document.getElementById('cost-field');
     const frequencyField = document.getElementById('frequency-field');
@@ -336,12 +324,9 @@
     // Default entries
     const defaultEntries = [
         { type: 'Passport', description: 'India', cost: '', currency: '', frequency: '', startDate: '2024-04-02', endDate: '2028-04-04', isDocument: true },
-        { type: 'Drivers License', description: 'Oregon', cost: '', currency: '', frequency: '', startDate: '2024-04-02', endDate: '2028-04-04', isDocument: true },
         { type: 'Netflix', description: '', cost: '7', currency: 'USD', frequency: 'Monthly', startDate: '2024-04-26', endDate: '2025-04-26', isDocument: false },
-        { type: 'Amex Annual Fee', description: '', cost: '99', currency: 'USD', frequency: 'Monthly', startDate: '2025-04-30', endDate: '2025-08-30', isDocument: false },
         { type: 'Rental Lease', description: 'Property 1', cost: '45000', currency: 'INR', frequency: 'Yearly', startDate: '2025-04-28', endDate: '2025-08-28', isDocument: false },
-        { type: 'Paycheck', description: 'Salary', cost: '3000', currency: 'USD', frequency: 'Monthly', startDate: '2025-01-01', endDate: '2025-12-31', isDocument: false },
-        { type: 'Rental Lease', description: 'Property 2', cost: '-1200', currency: 'USD', frequency: 'Monthly', startDate: '2025-05-01', endDate: '2026-04-30', isDocument: false }
+        { type: 'Paycheck', description: 'Salary', cost: '3000', currency: 'USD', frequency: 'Monthly', startDate: '2025-01-01', endDate: '2025-12-31', isDocument: false }
     ];
 
     // Load entries from localStorage or use default entries
@@ -364,6 +349,7 @@
         frequencyField.classList.add('hidden');
         startDateField.classList.remove('hidden');
         endDateField.classList.remove('hidden');
+        transactionTypeRow.classList.add('hidden');
 
         if (type === 'other') {
             otherTypeContainer.classList.remove('hidden');
@@ -373,18 +359,31 @@
                     if (selectedType === 'document') {
                         costField.classList.add('hidden');
                         frequencyField.classList.add('hidden');
+                        transactionTypeRow.classList.add('hidden');
                     } else if (selectedType === 'subscription') {
                         costField.classList.remove('hidden');
                         frequencyField.classList.remove('hidden');
+                        transactionTypeRow.classList.add('hidden');
                     }
                 });
             });
         } else if (type === 'document') {
             costField.classList.add('hidden');
             frequencyField.classList.add('hidden');
+            transactionTypeRow.classList.add('hidden');
         } else if (type === 'subscription') {
             costField.classList.remove('hidden');
             frequencyField.classList.remove('hidden');
+            // Only show transaction type for Paycheck and Rental Lease
+            if (docTypeSelect.value === 'Paycheck' || docTypeSelect.value === 'Rental Lease') {
+                transactionTypeRow.classList.remove('hidden');
+                // Default to earning for both
+                transactionRadios.forEach(radio => {
+                    radio.checked = radio.value === 'earning';
+                });
+            } else {
+                transactionTypeRow.classList.add('hidden');
+            }
         }
     }
 
@@ -400,7 +399,7 @@
         docTypeSelect.value = 'Passport';
         otherTypeInput.value = '';
         typeRadios.forEach(radio => radio.checked = false);
-        transactionRadios.forEach(radio => radio.checked = radio.value === 'expense');
+        transactionRadios.forEach(radio => radio.checked = false);
         descriptionInput.value = '';
         costInput.value = '';
         currencySelect.value = 'USD';
@@ -455,7 +454,16 @@
         const frequency = frequencySelect.value;
         const startDate = startDateInput.value;
         const endDate = endDateInput.value;
-        const transactionType = document.querySelector('input[name="transaction-type"]:checked')?.value;
+
+        // Transaction type logic
+        let transactionType = null;
+        if (!isDocument) {
+            if (docType === 'Paycheck' || docType === 'Rental Lease') {
+                transactionType = document.querySelector('input[name="transaction-type"]:checked')?.value || 'earning';
+            } else {
+                transactionType = 'expense';
+            }
+        }
 
         // Strip currency symbols from cost
         if (cost) {
@@ -495,10 +503,6 @@
                 frequencySelect.classList.add('error');
                 hasError = true;
             }
-        }
-        if (!transactionType) {
-            alert('Please select whether this is an Expense or Earning.');
-            hasError = true;
         }
 
         if (hasError) {
@@ -546,10 +550,8 @@
     // Color logic for cost cell
     function getCostClass(entry) {
         if (entry.isDocument) return '';
-        if (entry.type === 'Paycheck') return 'faint-green';
-        if (entry.type === 'Rental Lease') {
-            const costNum = parseFloat(entry.cost || '0');
-            return costNum < 0 ? 'faint-red' : 'faint-green';
+        if (entry.type === 'Paycheck' || entry.type === 'Rental Lease') {
+            return entry.transactionType === 'earning' ? 'faint-green' : 'faint-red';
         }
         // All other subscriptions are expenses
         return 'faint-red';
@@ -595,8 +597,13 @@
             frequencySelect.value = entry.frequency;
             startDateInput.value = entry.startDate;
             endDateInput.value = entry.endDate;
-            const transactionRadio = Array.from(transactionRadios).find(r => r.value === entry.transactionType);
-            if (transactionRadio) transactionRadio.checked = true;
+
+            // Set transaction type radio for Paycheck/Rental Lease
+            if (entry.type === 'Paycheck' || entry.type === 'Rental Lease') {
+                transactionRadios.forEach(radio => {
+                    radio.checked = radio.value === (entry.transactionType || 'earning');
+                });
+            }
 
             // Handle custom types
             if (!Array.from(docTypeSelect.options).some(option => option.value === entry.type)) {
