@@ -49,6 +49,18 @@
         .button:hover {
             background-color: #16a34a;
         }
+        .edit-button {
+            background-color: #3b82f6;
+        }
+        .edit-button:hover {
+            background-color: #2563eb;
+        }
+        .delete-button {
+            background-color: #ef4444;
+        }
+        .delete-button:hover {
+            background-color: #dc2626;
+        }
         .radio-group {
             display: flex;
             gap: 1rem;
@@ -81,6 +93,17 @@
         }
         .table td {
             color: #d1d5db;
+        }
+        .error {
+            border-color: #ef4444 !important;
+            box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2) !important;
+        }
+        .currency-container {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .currency-select {
+            width: 100px;
         }
     </style>
 </head>
@@ -146,7 +169,12 @@
                     </div>
                     <div id="cost-field" class="hidden">
                         <label for="cost" class="label">Cost</label>
-                        <input type="text" id="cost" placeholder="e.g., $7" class="input">
+                        <div class="currency-container">
+                            <select id="currency" class="select currency-select">
+                                <!-- Populated dynamically -->
+                            </select>
+                            <input type="text" id="cost" placeholder="e.g., 7" class="input">
+                        </div>
                     </div>
                     <div id="frequency-field" class="hidden">
                         <label for="frequency" class="label">Monthly/Yearly</label>
@@ -179,6 +207,7 @@
                             <th>Frequency</th>
                             <th>Start Date</th>
                             <th>Expiration Date</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody id="entries-tbody"></tbody>
@@ -209,16 +238,223 @@
         const endDateField = document.getElementById('end-date-field');
         const addEntryBtn = document.getElementById('add-entry-btn');
         const entriesTbody = document.getElementById('entries-tbody');
+        const currencySelect = document.getElementById('currency');
 
-        // Sample Data
-        const sampleData = [
-            { type: 'Passport', description: 'India', cost: '', frequency: '', startDate: '2024-04-02', endDate: '2028-04-04', isDocument: true },
-            { type: 'Drivers License', description: 'Oregon', cost: '', frequency: '', startDate: '2024-04-02', endDate: '2028-04-04', isDocument: true },
-            { type: 'Netflix', description: '', cost: '$7', frequency: 'Monthly', startDate: '2024-04-26', endDate: '2025-04-26', isDocument: false }
+        // Input elements for validation
+        const descriptionInput = document.getElementById('description');
+        const costInput = document.getElementById('cost');
+        const frequencySelect = document.getElementById('frequency');
+        const startDateInput = document.getElementById('start-date');
+        const endDateInput = document.getElementById('end-date');
+
+        // Currency list from gist
+        const currencies = {
+            "AED": "United Arab Emirates Dirham",
+            "AFN": "Afghan Afghani",
+            "ALL": "Albanian Lek",
+            "AMD": "Armenian Dram",
+            "ANG": "Netherlands Antillean Guilder",
+            "AOA": "Angolan Kwanza",
+            "ARS": "Argentine Peso",
+            "AUD": "Australian Dollar",
+            "AWG": "Aruban Florin",
+            "AZN": "Azerbaijani Manat",
+            "BAM": "Bosnia-Herzegovina Convertible Mark",
+            "BBD": "Barbadian Dollar",
+            "BDT": "Bangladeshi Taka",
+            "BGN": "Bulgarian Lev",
+            "BHD": "Bahraini Dinar",
+            "BIF": "Burundian Franc",
+            "BMD": "Bermudian Dollar",
+            "BND": "Brunei Dollar",
+            "BOB": "Bolivian Boliviano",
+            "BRL": "Brazilian Real",
+            "BSD": "Bahamian Dollar",
+            "BTC": "Bitcoin",
+            "BTN": "Bhutanese Ngultrum",
+            "BWP": "Botswana Pula",
+            "BYN": "Belarusian Rubles",
+            "BZD": "Belize Dollar",
+            "CAD": "Canadian Dollar",
+            "CDF": "Congolese Franc",
+            "CHF": "Swiss Franc",
+            "CLF": "Chilean Unit of Account (UF)",
+            "CLP": "Chilean Peso",
+            "CNH": "Chinese Yuan (Offshore)",
+            "CNY": "Chinese Yuan",
+            "COP": "Colombian Peso",
+            "CRC": "Costa Rican Colón",
+            "CUC": "Cuban Convertible Peso",
+            "CUP": "Cuban Peso",
+            "CVE": "Cape Verdean Escudo",
+            "CZK": "Czech Koruna",
+            "DJF": "Djiboutian Franc",
+            "DKK": "Danish Krone",
+            "DOP": "Dominican Peso",
+            "DZD": "Algerian Dinar",
+            "EGP": "Egyptian Pound",
+            "ERN": "Eritrean Nakfa",
+            "ETB": "Ethiopian Birr",
+            "EUR": "Euro",
+            "FJD": "Fijian Dollar",
+            "FKP": "Falkland Islands Pound",
+            "GBP": "British Pound Sterling",
+            "GEL": "Georgian Lari",
+            "GGP": "Guernsey Pound",
+            "GHS": "Ghanaian Cedi",
+            "GIP": "Gibraltar Pound",
+            "GMD": "Gambian Dalasi",
+            "GNF": "Guinean Franc",
+            "GTQ": "Guatemalan Quetzal",
+            "GYD": "Guyanese Dollar",
+            "HKD": "Hong Kong Dollar",
+            "HNL": "Honduran Lempira",
+            "HRK": "Croatian Kuna",
+            "HTG": "Haitian Gourde",
+            "HUF": "Hungarian Forint",
+            "IDR": "Indonesian Rupiah",
+            "ILS": "Israeli New Shekel",
+            "IMP": "Manx pound",
+            "INR": "Indian Rupee",
+            "IQD": "Iraqi Dinar",
+            "IRR": "Iranian Rial",
+            "ISK": "Icelandic Króna",
+            "JEP": "Jersey Pound",
+            "JMD": "Jamaican Dollar",
+            "JOD": "Jordanian Dinar",
+            "JPY": "Japanese Yen",
+            "KES": "Kenyan Shilling",
+            "KGS": "Kyrgyzstani Som",
+            "KHR": "Cambodian Riel",
+            "KMF": "Comorian Franc",
+            "KPW": "North Korean Won",
+            "KRW": "South Korean Won",
+            "KWD": "Kuwaiti Dinar",
+            "KYD": "Cayman Islands Dollar",
+            "KZT": "Kazakhstani Tenge",
+            "LAK": "Lao Kip",
+            "LBP": "Lebanese Pound",
+            "LKR": "Sri Lankan Rupee",
+            "LRD": "Liberian Dollar",
+            "LSL": "Lesotho Loti",
+            "LYD": "Libyan Dinar",
+            "MAD": "Moroccan Dirham",
+            "MDL": "Moldovan Leu",
+            "MGA": "Malagasy Ariary",
+            "MKD": "Macedonian Denar",
+            "MMK": "Burmese Kyat",
+            "MNT": "Mongolian Tögrög",
+            "MOP": "Macanese Pataca",
+            "MRO": "Mauritanian Ouguiya (pre-2018)",
+            "MRU": "Mauritanian Ouguiya",
+            "MUR": "Mauritian Rupee",
+            "MVR": "Maldivian Rufiyaa",
+            "MWK": "Malawian Kwacha",
+            "MXN": "Mexican Peso",
+            "MYR": "Malaysian Ringgit",
+            "MZN": "Mozambican Metical",
+            "NAD": "Namibian Dollar",
+            "NGN": "Nigerian Naira",
+            "NIO": "Nicaraguan Córdoba",
+            "NOK": "Norwegian Krone",
+            "NPR": "Nepalese Rupee",
+            "NZD": "New Zealand Dollar",
+            "OMR": "Omani Rial",
+            "PAB": "Panamanian Balboa",
+            "PEN": "Peruvian Sol",
+            "PGK": "Papua New Guinean Kina",
+            "PHP": "Philippine Peso",
+            "PKR": "Pakistani Rupee",
+            "PLN": "Polish Złoty",
+            "PYG": "Paraguayan Guarani",
+            "QAR": "Qatari Riyal",
+            "RON": "Romanian Leu",
+            "RSD": "Serbian Dinar",
+            "RUB": "Russian Rubles",
+            "RWF": "Rwandan Franc",
+            "SAR": "Saudi Riyal",
+            "SBD": "Solomon Islands Dollar",
+            "SCR": "Seychellois Rupee",
+            "SDG": "Sudanese Pound",
+            "SEK": "Swedish Krona",
+            "SGD": "Singapore Dollar",
+            "SHP": "Saint Helena Pound",
+            "SLL": "Sierra Leonean Leone",
+            "SOS": "Somali Shilling",
+            "SRD": "Surinamese Dollar",
+            "SSP": "South Sudanese Pound",
+            "STD": "São Tomé and Príncipe Dobra (pre-2018)",
+            "STN": "São Tomé and Príncipe Dobra",
+            "SVC": "Salvadoran Colón",
+            "SYP": "Syrian Pound",
+            "SZL": "Swazi Lilangeni",
+            "THB": "Thai Baht",
+            "TJS": "Tajikistani Somoni",
+            "TMT": "Turkmenistan Manat",
+            "TND": "Tunisian Dinar",
+            "TOP": "Tongan Paʻanga",
+            "TRY": "Turkish Lira",
+            "TTD": "Trinidad and Tobago Dollar",
+            "TWD": "New Taiwan Dollar",
+            "TZS": "Tanzanian Shilling",
+            "UAH": "Ukrainian Hryvnia",
+            "UGX": "Ugandan Shilling",
+            "USD": "United States Dollar",
+            "UYU": "Uruguayan Peso",
+            "UZS": "Uzbekistani Soʻm",
+            "VEF": "Venezuelan Bolívar (pre-2018)",
+            "VES": "Venezuelan Bolívar",
+            "VND": "Vietnamese Đồng",
+            "VUV": "Vanuatu Vatu",
+            "WST": "Samoan Tala",
+            "XAF": "Central African CFA Franc",
+            "XAG": "Silver (troy ounce)",
+            "XAU": "Gold (troy ounce)",
+            "XCD": "Eastern Caribbean Dollar",
+            "XDR": "Special Drawing Rights",
+            "XOF": "West African CFA Franc",
+            "XPD": "Palladium (troy ounce)",
+            "XPF": "CFP Franc",
+            "XPT": "Platinum (troy ounce)",
+            "YER": "Yemeni Rial",
+            "ZAR": "South African Rand",
+            "ZMW": "Zambian Kwacha",
+            "ZWL": "Zimbabwean Dollar"
+        };
+
+        // Currency symbol mapping for common currencies
+        const currencySymbols = {
+            "USD": "$",
+            "EUR": "€",
+            "GBP": "£",
+            "JPY": "¥",
+            "AUD": "A$",
+            "CAD": "C$",
+            "CHF": "Fr",
+            "CNY": "¥",
+            "INR": "₹",
+            "BRL": "R$",
+            // Fallback to code if no symbol defined
+        };
+
+        // Populate currency dropdown
+        Object.keys(currencies).forEach(code => {
+            const option = document.createElement('option');
+            option.value = code;
+            option.textContent = code;
+            if (code === 'USD') option.selected = true;
+            currencySelect.appendChild(option);
+        });
+
+        // Store entries for duplicate checking
+        let entries = [
+            { type: 'Passport', description: 'India', cost: '', currency: '', frequency: '', startDate: '2024-04-02', endDate: '2028-04-04', isDocument: true },
+            { type: 'Drivers License', description: 'Oregon', cost: '', currency: '', frequency: '', startDate: '2024-04-02', endDate: '2028-04-04', isDocument: true },
+            { type: 'Netflix', description: '', cost: '7', currency: 'USD', frequency: 'Monthly', startDate: '2024-04-26', endDate: '2025-04-26', isDocument: false }
         ];
 
         // Load sample data on page load
-        sampleData.forEach(entry => addEntryToTable(entry));
+        entries.forEach(entry => addEntryToTable(entry));
 
         // Show/hide fields based on selection
         function updateFormFields() {
@@ -256,11 +492,48 @@
             }
         }
 
+        // Clear error states
+        function clearErrors() {
+            [descriptionInput, costInput, frequencySelect, startDateInput, endDateInput, otherTypeInput].forEach(input => {
+                if (input) input.classList.remove('error');
+            });
+        }
+
+        // Clear form and reset button
+        function clearForm() {
+            docTypeSelect.value = 'Passport';
+            otherTypeInput.value = '';
+            typeRadios.forEach(radio => radio.checked = false);
+            descriptionInput.value = '';
+            costInput.value = '';
+            currencySelect.value = 'USD';
+            frequencySelect.value = '';
+            startDateInput.value = '';
+            endDateInput.value = '';
+            addEntryBtn.textContent = 'Add Entry';
+            addEntryBtn.dataset.index = '';
+            clearErrors();
+            updateFormFields();
+        }
+
+        // Check for duplicate entries
+        function isDuplicateEntry(entry, excludeIndex = -1) {
+            return entries.some((existingEntry, index) => {
+                if (index === excludeIndex) return false;
+                return existingEntry.type === entry.type &&
+                       existingEntry.description === entry.description &&
+                       existingEntry.startDate === entry.startDate &&
+                       existingEntry.endDate === entry.endDate;
+            });
+        }
+
         docTypeSelect.addEventListener('change', updateFormFields);
         updateFormFields();
 
-        // Add new entry
+        // Add or update entry
         addEntryBtn.addEventListener('click', () => {
+            clearErrors();
+
             const selectedOption = docTypeSelect.options[docTypeSelect.selectedIndex];
             const type = selectedOption.getAttribute('data-type');
             let docType = docTypeSelect.value;
@@ -271,6 +544,7 @@
                 const selectedType = document.querySelector('input[name="type-selection"]:checked')?.value;
                 if (!docType || !selectedType) {
                     alert('Please specify the custom type and select whether it is a Document or Subscription.');
+                    otherTypeInput.classList.add('error');
                     return;
                 }
                 isDocument = selectedType === 'document';
@@ -278,53 +552,145 @@
                 isDocument = false;
             }
 
-            const description = document.getElementById('description').value;
-            const cost = document.getElementById('cost').value;
-            const frequency = document.getElementById('frequency').value;
-            const startDate = document.getElementById('start-date').value;
-            const endDate = document.getElementById('end-date').value;
+            const description = descriptionInput.value.trim();
+            let cost = costInput.value.trim();
+            const currency = currencySelect.value;
+            const frequency = frequencySelect.value;
+            const startDate = startDateInput.value;
+            const endDate = endDateInput.value;
 
-            if (!startDate || !endDate) {
-                alert('Please fill in both the Start Date and Expiration Date.');
+            // Strip currency symbols from cost
+            if (cost) {
+                cost = cost.replace(/[$€£¥₹₽₿₪₫₴₸₺₽₲₵₣₤₥₦₧₨₩₮₯₰₱₳₴₵₷₸₹₺₻₼₽₾₿]/g, '').trim();
+            }
+
+            // Validation
+            let hasError = false;
+
+            if (!startDate) {
+                startDateInput.classList.add('error');
+                hasError = true;
+            }
+            if (!endDate) {
+                endDateInput.classList.add('error');
+                hasError = true;
+            }
+            if (startDate && endDate) {
+                const startDateObj = new Date(startDate);
+                const endDateObj = new Date(endDate);
+                if (startDateObj >= endDateObj) {
+                    startDateInput.classList.add('error');
+                    endDateInput.classList.add('error');
+                    hasError = true;
+                }
+            }
+            if (isDocument && !description) {
+                descriptionInput.classList.add('error');
+                hasError = true;
+            }
+            if (!isDocument) {
+                if (!cost || isNaN(parseFloat(cost))) {
+                    costInput.classList.add('error');
+                    hasError = true;
+                }
+                if (!frequency) {
+                    frequencySelect.classList.add('error');
+                    hasError = true;
+                }
+            }
+
+            if (hasError) {
+                alert('Please correct the highlighted fields.');
                 return;
             }
 
             const entry = {
                 type: docType,
-                description: description || '--',
-                cost: isDocument ? '--' : (cost || '--'),
-                frequency: isDocument ? '--' : (frequency || '--'),
+                description: description || '',
+                cost: isDocument ? '' : cost,
+                currency: isDocument ? '' : currency,
+                frequency: isDocument ? '' : frequency,
                 startDate: startDate,
                 endDate: endDate,
                 isDocument: isDocument
             };
 
-            addEntryToTable(entry);
+            const editIndex = parseInt(addEntryBtn.dataset.index, 10);
 
-            // Clear form
-            docTypeSelect.value = 'Passport';
-            otherTypeInput.value = '';
-            typeRadios.forEach(radio => radio.checked = false);
-            document.getElementById('description').value = '';
-            document.getElementById('cost').value = '';
-            document.getElementById('frequency').value = '';
-            document.getElementById('start-date').value = '';
-            document.getElementById('end-date').value = '';
-            updateFormFields();
+            // Check for duplicates
+            if (isDuplicateEntry(entry, editIndex)) {
+                alert('This entry already exists with the same type, description, start date, and expiration date.');
+                return;
+            }
+
+            // Update or add entry
+            if (!isNaN(editIndex) && editIndex >= 0) {
+                entries[editIndex] = entry;
+                entriesTbody.innerHTML = '';
+                entries.forEach(entry => addEntryToTable(entry));
+            } else {
+                entries.push(entry);
+                addEntryToTable(entry);
+            }
+
+            clearForm();
         });
 
-        function addEntryToTable(entry) {
+        function addEntryToTable(entry, index) {
             const row = document.createElement('tr');
+            const costDisplay = entry.cost && entry.currency ? `${currencySymbols[entry.currency] || entry.currency} ${entry.cost}` : '';
             row.innerHTML = `
                 <td>${entry.type}</td>
                 <td>${entry.description}</td>
-                <td>${entry.cost}</td>
+                <td>${costDisplay}</td>
                 <td>${entry.frequency}</td>
                 <td>${entry.startDate}</td>
                 <td>${entry.endDate}</td>
+                <td>
+                    <button class="edit-button button text-sm px-2 py-1 mr-2" data-index="${index}">Edit</button>
+                    <button class="delete-button button text-sm px-2 py-1" data-index="${index}">Delete</button>
+                </td>
             `;
             entriesTbody.appendChild(row);
+
+            // Add event listeners for edit and delete buttons
+            row.querySelector('.edit-button').addEventListener('click', () => {
+                const entry = entries[index];
+                docTypeSelect.value = entry.type;
+                descriptionInput.value = entry.description;
+                costInput.value = entry.cost;
+                currencySelect.value = entry.currency || 'USD';
+                frequencySelect.value = entry.frequency;
+                startDateInput.value = entry.startDate;
+                endDateInput.value = entry.endDate;
+
+                // Handle custom types
+                if (!Array.from(docTypeSelect.options).some(option => option.value === entry.type)) {
+                    docTypeSelect.value = 'Other';
+                    otherTypeInput.value = entry.type;
+                    const radio = Array.from(typeRadios).find(r => r.value === (entry.isDocument ? 'document' : 'subscription'));
+                    if (radio) radio.checked = true;
+                } else {
+                    docTypeSelect.value = entry.type;
+                }
+
+                updateFormFields();
+                addEntryBtn.textContent = 'Update Entry';
+                addEntryBtn.dataset.index = index;
+            });
+
+            row.querySelector('.delete-button').addEventListener('click', () => {
+                if (confirm('Are you sure you want to delete this entry?')) {
+                    entries.splice(index, 1);
+                    entriesTbody.innerHTML = '';
+                    entries.forEach((entry, i) => addEntryToTable(entry, i));
+                }
+            });
         }
+
+        // Re-render table on page load
+        entriesTbody.innerHTML = '';
+        entries.forEach((entry, index) => addEntryToTable(entry, index));
     </script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'937c54801a8d6748',t:'MTc0NTkwMzgxNS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
