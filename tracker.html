@@ -6,144 +6,150 @@
     <title>DocuTimer: Tracker (Beta)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body {
-            background: linear-gradient(to bottom right, #1e3a8a, #3b82f6);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
+    body {
+        background: linear-gradient(to bottom right, #1e3a8a, #3b82f6);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+    .input, .select {
+        background-color: #1f2937;
+        border: 1px solid #4b5563;
+        color: white;
+        padding: 0.5rem 0.75rem;
+        border-radius: 0.375rem;
+        width: 100%;
+        outline: none;
+        transition: border-color 0.2s;
+    }
+    .input:focus, .select:focus {
+        border-color: #22c55e;
+        box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.2);
+    }
+    .input::placeholder {
+        color: #9ca3af;
+    }
+    .label {
+        color: #e5e7eb;
+        font-size: 0.875rem;
+        font-weight: 500;
+        margin-bottom: 0.25rem;
+        display: block;
+    }
+    .button {
+        background-color: #22c55e;
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 0.375rem;
+        font-weight: 500;
+        transition: background-color 0.2s;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .button:hover {
+        background-color: #16a34a;
+    }
+    .edit-button {
+        background-color: #3b82f6;
+    }
+    .edit-button:hover {
+        background-color: #2563eb;
+    }
+    .delete-button {
+        background-color: #ef4444;
+    }
+    .delete-button:hover {
+        background-color: #dc2626;
+    }
+    .radio-group {
+        display: flex;
+        gap: 1rem;
+    }
+    .radio-label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #e5e7eb;
+    }
+    .radio {
+        accent-color: #22c55e;
+    }
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+        background-color: #1f2937;
+        border-radius: 0.375rem;
+        overflow: hidden;
+    }
+    .table th, .table td {
+        padding: 0.75rem;
+        text-align: left;
+        border-bottom: 1px solid #4b5563;
+    }
+    .table th {
+        background-color: #374151;
+        color: #e5e7eb;
+        font-weight: 600;
+    }
+    .table td {
+        color: #d1d5db;
+    }
+    .faint-red {
+        color: #ef4444;
+        background: rgba(239,68,68,0.08);
+        border-radius: 0.25rem;
+        padding: 0.15em 0.5em;
+    }
+    .faint-green {
+        color: #22c55e;
+        background: rgba(34,197,94,0.08);
+        border-radius: 0.25rem;
+        padding: 0.15em 0.5em;
+    }
+    .error {
+        border-color: #ef4444 !important;
+        box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2) !important;
+    }
+    .currency-container {
+        display: flex;
+        gap: 0.5rem;
+    }
+    .currency-select {
+        width: 100px;
+        max-width: 100px;
+    }
+    .select, .currency-select {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        width: 100%;
+        max-width: 100%;
+    }
+    .currency-container .currency-select {
+        width: 100px;
+        max-width: 100px;
+    }
+    .form-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    .form-row {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    .form-row.md-row {
+        flex-direction: row;
+        gap: 1rem;
+    }
+    @media (min-width: 768px) {
+        .form-row.md-row > * {
+            flex: 1;
         }
-        /* shadcn-inspired styles */
-        .input, .select {
-            background-color: #1f2937;
-            border: 1px solid #4b5563;
-            color: white;
-            padding: 0.5rem 0.75rem;
-            border-radius: 0.375rem;
-            width: 100%;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-        .input:focus, .select:focus {
-            border-color: #22c55e;
-            box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.2);
-        }
-        .input::placeholder {
-            color: #9ca3af;
-        }
-        .label {
-            color: #e5e7eb;
-            font-size: 0.875rem;
-            font-weight: 500;
-            margin-bottom: 0.25rem;
-            display: block;
-        }
-        .button {
-            background-color: #22c55e;
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 0.375rem;
-            font-weight: 500;
-            transition: background-color 0.2s;
-        }
-        .button:hover {
-            background-color: #16a34a;
-        }
-        .edit-button {
-            background-color: #3b82f6;
-        }
-        .edit-button:hover {
-            background-color: #2563eb;
-        }
-        .delete-button {
-            background-color: #ef4444;
-        }
-        .delete-button:hover {
-            background-color: #dc2626;
-        }
-        .radio-group {
-            display: flex;
-            gap: 1rem;
-        }
-        .radio-label {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            color: #e5e7eb;
-        }
-        .radio {
-            accent-color: #22c55e;
-        }
-        .table {
-            width: 100%;
-            border-collapse: collapse;
-            background-color: #1f2937;
-            border-radius: 0.375rem;
-            overflow: hidden;
-        }
-        .table th, .table td {
-            padding: 0.75rem;
-            text-align: left;
-            border-bottom: 1px solid #4b5563;
-        }
-        .table th {
-            background-color: #374151;
-            color: #e5e7eb;
-            font-weight: 600;
-        }
-        .table td {
-            color: #d1d5db;
-        }
-        .expense {
-            color: rgba(239, 68, 68, 0.7); /* Faint red for outgoing money */
-        }
-        .earning {
-            color: rgba(34, 197, 94, 0.7); /* Faint green for earnings */
-        }
-        .error {
-            border-color: #ef4444 !important;
-            box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2) !important;
-        }
-        .currency-container {
-            display: flex;
-            gap: 0.5rem;
-        }
-        .currency-select {
-            width: 100px;
-            max-width: 100px;
-        }
-        /* Ensure dropdown width matches text field in Safari */
-        .select, .currency-select {
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            appearance: none;
-            width: 100%;
-            max-width: 100%;
-        }
-        .currency-container .currency-select {
-            width: 100px;
-            max-width: 100px;
-        }
-        /* Fix form layout to ensure one row per field */
-        .form-grid {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-        .form-row {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-        .form-row.md-row {
-            flex-direction: row;
-            gap: 1rem;
-        }
-        @media (min-width: 768px) {
-            .form-row.md-row > * {
-                flex: 1;
-            }
-        }
+    }
     </style>
 </head>
 <body class="text-white font-sans">
@@ -225,9 +231,7 @@
                         <div id="cost-field" class="hidden">
                             <label for="cost" class="label">Cost</label>
                             <div class="currency-container">
-                                <select id="currency" class="select currency-select">
-                                    <!-- Populated dynamically -->
-                                </select>
+                                <select id="currency" class="select currency-select"></select>
                                 <input type="text" id="cost" placeholder="e.g., 7" class="input">
                             </div>
                         </div>
@@ -284,322 +288,344 @@
 
     <!-- JavaScript -->
     <script>
-        // Tracking Form
-        const docTypeSelect = document.getElementById('doc-type');
-        const otherTypeContainer = document.getElementById('other-type-container');
-        const otherTypeInput = document.getElementById('other-type');
-        const typeRadios = document.getElementsByName('type-selection');
-        const transactionRadios = document.getElementsByName('transaction-type');
-        const descriptionField = document.getElementById('description-field');
-        const costField = document.getElementById('cost-field');
-        const frequencyField = document.getElementById('frequency-field');
-        const startDateField = document.getElementById('start-date-field');
-        const endDateField = document.getElementById('end-date-field');
-        const addEntryBtn = document.getElementById('add-entry-btn');
-        const entriesTbody = document.getElementById('entries-tbody');
-        const currencySelect = document.getElementById('currency');
+    // Tracking Form
+    const docTypeSelect = document.getElementById('doc-type');
+    const otherTypeContainer = document.getElementById('other-type-container');
+    const otherTypeInput = document.getElementById('other-type');
+    const typeRadios = document.getElementsByName('type-selection');
+    const transactionRadios = document.getElementsByName('transaction-type');
+    const descriptionField = document.getElementById('description-field');
+    const costField = document.getElementById('cost-field');
+    const frequencyField = document.getElementById('frequency-field');
+    const startDateField = document.getElementById('start-date-field');
+    const endDateField = document.getElementById('end-date-field');
+    const addEntryBtn = document.getElementById('add-entry-btn');
+    const entriesTbody = document.getElementById('entries-tbody');
+    const currencySelect = document.getElementById('currency');
 
-        // Input elements for validation
-        const descriptionInput = document.getElementById('description');
-        const costInput = document.getElementById('cost');
-        const frequencySelect = document.getElementById('frequency');
-        const startDateInput = document.getElementById('start-date');
-        const endDateInput = document.getElementById('end-date');
+    // Input elements for validation
+    const descriptionInput = document.getElementById('description');
+    const costInput = document.getElementById('cost');
+    const frequencySelect = document.getElementById('frequency');
+    const startDateInput = document.getElementById('start-date');
+    const endDateInput = document.getElementById('end-date');
 
-        // Currency symbol mapping for common currencies
-        const currencySymbols = {
-            "USD": "$",
-            "EUR": "€",
-            "GBP": "£",
-            "JPY": "¥",
-            "AUD": "A$",
-            "CAD": "C$",
-            "CHF": "Fr",
-            "CNY": "¥",
-            "INR": "₹",
-            "BRL": "R$"
-        };
+    // Currency symbol mapping for common currencies
+    const currencySymbols = {
+        "USD": "$",
+        "EUR": "€",
+        "GBP": "£",
+        "JPY": "¥",
+        "AUD": "A$",
+        "CAD": "C$",
+        "CHF": "Fr",
+        "CNY": "¥",
+        "INR": "₹",
+        "BRL": "R$"
+    };
 
-        // Populate currency dropdown with only common currencies
-        Object.keys(currencySymbols).forEach(code => {
-            const option = document.createElement('option');
-            option.value = code;
-            option.textContent = code;
-            if (code === 'USD') option.selected = true;
-            currencySelect.appendChild(option);
-        });
+    // Populate currency dropdown with only common currencies
+    Object.keys(currencySymbols).forEach(code => {
+        const option = document.createElement('option');
+        option.value = code;
+        option.textContent = code;
+        if (code === 'USD') option.selected = true;
+        currencySelect.appendChild(option);
+    });
 
-        // Default entries
-        const defaultEntries = [
-            { type: 'Passport', description: 'India', cost: '', currency: '', frequency: '', startDate: '2024-04-02', endDate: '2028-04-04', isDocument: true, transactionType: 'expense' },
-            { type: 'Drivers License', description: 'Oregon', cost: '', currency: '', frequency: '', startDate: '2024-04-02', endDate: '2028-04-04', isDocument: true, transactionType: 'expense' },
-            { type: 'Netflix', description: '', cost: '7', currency: 'USD', frequency: 'Monthly', startDate: '2024-04-26', endDate: '2025-04-26', isDocument: false, transactionType: 'expense' },
-            { type: 'Amex Annual Fee', description: '', cost: '99', currency: 'USD', frequency: 'Monthly', startDate: '2025-04-30', endDate: '2025-08-30', isDocument: false, transactionType: 'expense' },
-            { type: 'Rental Lease', description: 'Property 1', cost: '45000', currency: 'INR', frequency: 'Yearly', startDate: '2025-04-28', endDate: '2025-08-28', isDocument: false, transactionType: 'earning' }
-        ];
+    // Default entries
+    const defaultEntries = [
+        { type: 'Passport', description: 'India', cost: '', currency: '', frequency: '', startDate: '2024-04-02', endDate: '2028-04-04', isDocument: true },
+        { type: 'Drivers License', description: 'Oregon', cost: '', currency: '', frequency: '', startDate: '2024-04-02', endDate: '2028-04-04', isDocument: true },
+        { type: 'Netflix', description: '', cost: '7', currency: 'USD', frequency: 'Monthly', startDate: '2024-04-26', endDate: '2025-04-26', isDocument: false },
+        { type: 'Amex Annual Fee', description: '', cost: '99', currency: 'USD', frequency: 'Monthly', startDate: '2025-04-30', endDate: '2025-08-30', isDocument: false },
+        { type: 'Rental Lease', description: 'Property 1', cost: '45000', currency: 'INR', frequency: 'Yearly', startDate: '2025-04-28', endDate: '2025-08-28', isDocument: false },
+        { type: 'Paycheck', description: 'Salary', cost: '3000', currency: 'USD', frequency: 'Monthly', startDate: '2025-01-01', endDate: '2025-12-31', isDocument: false },
+        { type: 'Rental Lease', description: 'Property 2', cost: '-1200', currency: 'USD', frequency: 'Monthly', startDate: '2025-05-01', endDate: '2026-04-30', isDocument: false }
+    ];
 
-        // Load entries from localStorage or use default entries
-        let entries = JSON.parse(localStorage.getItem('docutimerEntries')) || defaultEntries;
+    // Load entries from localStorage or use default entries
+    let entries = JSON.parse(localStorage.getItem('docutimerEntries')) || defaultEntries;
 
-        // Save entries to localStorage
-        function saveEntries() {
-            localStorage.setItem('docutimerEntries', JSON.stringify(entries));
-        }
+    // Save entries to localStorage
+    function saveEntries() {
+        localStorage.setItem('docutimerEntries', JSON.stringify(entries));
+    }
 
-        // Load sample data on page load
-        entries.forEach((entry, index) => addEntryToTable(entry, index));
+    // Show/hide fields based on selection
+    function updateFormFields() {
+        const selectedOption = docTypeSelect.options[docTypeSelect.selectedIndex];
+        const type = selectedOption.getAttribute('data-type');
 
-        // Show/hide fields based on selection
-        function updateFormFields() {
-            const selectedOption = docTypeSelect.options[docTypeSelect.selectedIndex];
-            const type = selectedOption.getAttribute('data-type');
+        // Reset visibility
+        otherTypeContainer.classList.add('hidden');
+        descriptionField.classList.remove('hidden');
+        costField.classList.add('hidden');
+        frequencyField.classList.add('hidden');
+        startDateField.classList.remove('hidden');
+        endDateField.classList.remove('hidden');
 
-            // Reset visibility
-            otherTypeContainer.classList.add('hidden');
-            descriptionField.classList.remove('hidden');
+        if (type === 'other') {
+            otherTypeContainer.classList.remove('hidden');
+            typeRadios.forEach(radio => {
+                radio.addEventListener('change', () => {
+                    const selectedType = document.querySelector('input[name="type-selection"]:checked')?.value;
+                    if (selectedType === 'document') {
+                        costField.classList.add('hidden');
+                        frequencyField.classList.add('hidden');
+                    } else if (selectedType === 'subscription') {
+                        costField.classList.remove('hidden');
+                        frequencyField.classList.remove('hidden');
+                    }
+                });
+            });
+        } else if (type === 'document') {
             costField.classList.add('hidden');
             frequencyField.classList.add('hidden');
-            startDateField.classList.remove('hidden');
-            endDateField.classList.remove('hidden');
-
-            if (type === 'other') {
-                otherTypeContainer.classList.remove('hidden');
-                typeRadios.forEach(radio => {
-                    radio.addEventListener('change', () => {
-                        const selectedType = document.querySelector('input[name="type-selection"]:checked')?.value;
-                        if (selectedType === 'document') {
-                            costField.classList.add('hidden');
-                            frequencyField.classList.add('hidden');
-                        } else if (selectedType === 'subscription') {
-                            costField.classList.remove('hidden');
-                            frequencyField.classList.remove('hidden');
-                        }
-                    });
-                });
-            } else if (type === 'document') {
-                costField.classList.add('hidden');
-                frequencyField.classList.add('hidden');
-            } else if (type === 'subscription') {
-                costField.classList.remove('hidden');
-                frequencyField.classList.remove('hidden');
-            }
+        } else if (type === 'subscription') {
+            costField.classList.remove('hidden');
+            frequencyField.classList.remove('hidden');
         }
+    }
 
-        // Clear error states
-        function clearErrors() {
-            [descriptionInput, costInput, frequencySelect, startDateInput, endDateInput, otherTypeInput].forEach(input => {
-                if (input) input.classList.remove('error');
-            });
-        }
+    // Clear error states
+    function clearErrors() {
+        [descriptionInput, costInput, frequencySelect, startDateInput, endDateInput, otherTypeInput].forEach(input => {
+            if (input) input.classList.remove('error');
+        });
+    }
 
-        // Clear form and reset button
-        function clearForm() {
-            docTypeSelect.value = 'Passport';
-            otherTypeInput.value = '';
-            typeRadios.forEach(radio => radio.checked = false);
-            transactionRadios.forEach(radio => radio.checked = radio.value === 'expense');
-            descriptionInput.value = '';
-            costInput.value = '';
-            currencySelect.value = 'USD';
-            frequencySelect.value = '';
-            startDateInput.value = '';
-            endDateInput.value = '';
-            addEntryBtn.textContent = 'Add Entry';
-            addEntryBtn.dataset.index = '';
-            clearErrors();
-            updateFormFields();
-        }
-
-        // Check for duplicate entries
-        function isDuplicateEntry(entry, excludeIndex = -1) {
-            return entries.some((existingEntry, index) => {
-                if (index === excludeIndex) return false;
-                return existingEntry.type === entry.type &&
-                       existingEntry.description === entry.description &&
-                       existingEntry.startDate === entry.startDate &&
-                       existingEntry.endDate === entry.endDate;
-            });
-        }
-
-        docTypeSelect.addEventListener('change', updateFormFields);
+    // Clear form and reset button
+    function clearForm() {
+        docTypeSelect.value = 'Passport';
+        otherTypeInput.value = '';
+        typeRadios.forEach(radio => radio.checked = false);
+        transactionRadios.forEach(radio => radio.checked = radio.value === 'expense');
+        descriptionInput.value = '';
+        costInput.value = '';
+        currencySelect.value = 'USD';
+        frequencySelect.value = '';
+        startDateInput.value = '';
+        endDateInput.value = '';
+        addEntryBtn.textContent = 'Add Entry';
+        addEntryBtn.dataset.index = '';
+        clearErrors();
         updateFormFields();
+    }
 
-        // Add or update entry
-        addEntryBtn.addEventListener('click', () => {
-            clearErrors();
+    // Check for duplicate entries
+    function isDuplicateEntry(entry, excludeIndex = -1) {
+        return entries.some((existingEntry, index) => {
+            if (index === excludeIndex) return false;
+            return existingEntry.type === entry.type &&
+                existingEntry.description === entry.description &&
+                existingEntry.startDate === entry.startDate &&
+                existingEntry.endDate === entry.endDate;
+        });
+    }
 
-            const selectedOption = docTypeSelect.options[docTypeSelect.selectedIndex];
-            const type = selectedOption.getAttribute('data-type');
-            let docType = docTypeSelect.value;
-            let isDocument = type === 'document';
+    docTypeSelect.addEventListener('change', updateFormFields);
+    updateFormFields();
 
-            if (type === 'other') {
-                docType = otherTypeInput.value.trim();
-                const selectedType = document.querySelector('input[name="type-selection"]:checked')?.value;
-                if (!docType || !selectedType) {
-                    alert('Please specify the custom type and select whether it is a Document or Subscription.');
-                    otherTypeInput.classList.add('error');
-                    return;
-                }
-                isDocument = selectedType === 'document';
-            } else if (type === 'subscription') {
-                isDocument = false;
+    // Add or update entry
+    addEntryBtn.addEventListener('click', () => {
+        clearErrors();
+
+        const selectedOption = docTypeSelect.options[docTypeSelect.selectedIndex];
+        const type = selectedOption.getAttribute('data-type');
+        let docType = docTypeSelect.value;
+        let isDocument = type === 'document';
+
+        if (type === 'other') {
+            docType = otherTypeInput.value.trim();
+            const selectedType = document.querySelector('input[name="type-selection"]:checked')?.value;
+            if (!docType || !selectedType) {
+                alert('Please specify the custom type and select whether it is a Document or Subscription.');
+                otherTypeInput.classList.add('error');
+                return;
             }
+            isDocument = selectedType === 'document';
+        } else if (type === 'subscription') {
+            isDocument = false;
+        }
 
-            const description = descriptionInput.value.trim();
-            let cost = costInput.value.trim();
-            const currency = currencySelect.value;
-            const frequency = frequencySelect.value;
-            const startDate = startDateInput.value;
-            const endDate = endDateInput.value;
-            const transactionType = document.querySelector('input[name="transaction-type"]:checked')?.value;
+        const description = descriptionInput.value.trim();
+        let cost = costInput.value.trim();
+        const currency = currencySelect.value;
+        const frequency = frequencySelect.value;
+        const startDate = startDateInput.value;
+        const endDate = endDateInput.value;
+        const transactionType = document.querySelector('input[name="transaction-type"]:checked')?.value;
 
-            // Strip currency symbols from cost
-            if (cost) {
-                cost = cost.replace(/[$€£¥₹₽₿₪₫₴₸₺₽₲₵₣₤₥₦₧₨₩₮₯₰₱₳₴₵₷₸₹₺₻₼₽₾₿]/g, '').trim();
-            }
+        // Strip currency symbols from cost
+        if (cost) {
+            cost = cost.replace(/[$€£¥₹₽₿₪₫₴₸₺₽₲₵₣₤₥₦₧₨₩₮₯₰₱₳₴₵₷₸₹₺₻₼₽₾₿]/g, '').trim();
+        }
 
-            // Validation
-            let hasError = false;
+        // Validation
+        let hasError = false;
 
-            if (!startDate) {
+        if (!startDate) {
+            startDateInput.classList.add('error');
+            hasError = true;
+        }
+        if (!endDate) {
+            endDateInput.classList.add('error');
+            hasError = true;
+        }
+        if (startDate && endDate) {
+            const startDateObj = new Date(startDate);
+            const endDateObj = new Date(endDate);
+            if (startDateObj >= endDateObj) {
                 startDateInput.classList.add('error');
-                hasError = true;
-            }
-            if (!endDate) {
                 endDateInput.classList.add('error');
                 hasError = true;
             }
-            if (startDate && endDate) {
-                const startDateObj = new Date(startDate);
-                const endDateObj = new Date(endDate);
-                if (startDateObj >= endDateObj) {
-                    startDateInput.classList.add('error');
-                    endDateInput.classList.add('error');
-                    hasError = true;
-                }
-            }
-            if (isDocument && !description) {
-                descriptionInput.classList.add('error');
+        }
+        if (isDocument && !description) {
+            descriptionInput.classList.add('error');
+            hasError = true;
+        }
+        if (!isDocument) {
+            if (!cost || isNaN(parseFloat(cost))) {
+                costInput.classList.add('error');
                 hasError = true;
             }
-            if (!isDocument) {
-                if (!cost || isNaN(parseFloat(cost))) {
-                    costInput.classList.add('error');
-                    hasError = true;
-                }
-                if (!frequency) {
-                    frequencySelect.classList.add('error');
-                    hasError = true;
-                }
-            }
-            if (!transactionType) {
-                alert('Please select whether this is an Expense or Earning.');
+            if (!frequency) {
+                frequencySelect.classList.add('error');
                 hasError = true;
             }
-
-            if (hasError) {
-                alert('Please correct the highlighted fields.');
-                return;
-            }
-
-            const entry = {
-                type: docType,
-                description: description || '',
-                cost: isDocument ? '' : cost,
-                currency: isDocument ? '' : currency,
-                frequency: isDocument ? '' : frequency,
-                startDate: startDate,
-                endDate: endDate,
-                isDocument: isDocument,
-                transactionType: transactionType
-            };
-
-            const editIndex = parseInt(addEntryBtn.dataset.index, 10);
-
-            // Check for duplicates
-            if (isDuplicateEntry(entry, editIndex)) {
-                alert('This entry already exists with the same type, description, start date, and expiration date.');
-                return;
-            }
-
-            // Update or add entry
-            if (!isNaN(editIndex) && editIndex >= 0) {
-                entries[editIndex] = entry;
-            } else {
-                entries.push(entry);
-            }
-
-            // Save to localStorage
-            saveEntries();
-
-            // Re-render table
-            entriesTbody.innerHTML = '';
-            entries.forEach((entry, index) => addEntryToTable(entry, index));
-
-            clearForm();
-        });
-
-        function addEntryToTable(entry, index) {
-            const row = document.createElement('tr');
-            const costDisplay = entry.cost && entry.currency ? `${currencySymbols[entry.currency] || entry.currency} ${entry.cost}` : '';
-            const costClass = entry.transactionType === 'expense' ? 'expense' : 'earning';
-            row.innerHTML = `
-                <td>${entry.type}</td>
-                <td>${entry.description}</td>
-                <td class="${costClass}">${costDisplay}</td>
-                <td>${entry.frequency}</td>
-                <td>${entry.startDate}</td>
-                <td>${entry.endDate}</td>
-                <td>
-                    <button class="edit-button button text-sm px-2 py-1 mr-2" data-index="${index}">Edit</button>
-                    <button class="delete-button button text-sm px-2 py-1" data-index="${index}">Delete</button>
-                </td>
-            `;
-            entriesTbody.appendChild(row);
-
-            // Add event listeners for edit and delete buttons
-            row.querySelector('.edit-button').addEventListener('click', () => {
-                clearErrors();
-                const entry = entries[index];
-                docTypeSelect.value = entry.type;
-                descriptionInput.value = entry.description;
-                costInput.value = entry.cost;
-                currencySelect.value = entry.currency || 'USD';
-                frequencySelect.value = entry.frequency;
-                startDateInput.value = entry.startDate;
-                endDateInput.value = entry.endDate;
-                const transactionRadio = Array.from(transactionRadios).find(r => r.value === entry.transactionType);
-                if (transactionRadio) transactionRadio.checked = true;
-
-                // Handle custom types
-                if (!Array.from(docTypeSelect.options).some(option => option.value === entry.type)) {
-                    docTypeSelect.value = 'Other';
-                    otherTypeInput.value = entry.type;
-                    const radio = Array.from(typeRadios).find(r => r.value === (entry.isDocument ? 'document' : 'subscription'));
-                    if (radio) radio.checked = true;
-                } else {
-                    docTypeSelect.value = entry.type;
-                }
-
-                updateFormFields();
-                addEntryBtn.textContent = 'Update Entry';
-                addEntryBtn.dataset.index = index;
-            });
-
-            row.querySelector('.delete-button').addEventListener('click', () => {
-                if (confirm('Are you sure you want to delete this entry?')) {
-                    entries.splice(index, 1);
-                    saveEntries();
-                    entriesTbody.innerHTML = '';
-                    entries.forEach((entry, i) => addEntryToTable(entry, i));
-                }
-            });
+        }
+        if (!transactionType) {
+            alert('Please select whether this is an Expense or Earning.');
+            hasError = true;
         }
 
-        // Re-render table on page load
+        if (hasError) {
+            alert('Please correct the highlighted fields.');
+            return;
+        }
+
+        const entry = {
+            type: docType,
+            description: description || '',
+            cost: isDocument ? '' : cost,
+            currency: isDocument ? '' : currency,
+            frequency: isDocument ? '' : frequency,
+            startDate: startDate,
+            endDate: endDate,
+            isDocument: isDocument,
+            transactionType: transactionType
+        };
+
+        const editIndex = parseInt(addEntryBtn.dataset.index, 10);
+
+        // Check for duplicates
+        if (isDuplicateEntry(entry, editIndex)) {
+            alert('This entry already exists with the same type, description, start date, and expiration date.');
+            return;
+        }
+
+        // Update or add entry
+        if (!isNaN(editIndex) && editIndex >= 0) {
+            entries[editIndex] = entry;
+        } else {
+            entries.push(entry);
+        }
+
+        // Save to localStorage
+        saveEntries();
+
+        // Re-render table
         entriesTbody.innerHTML = '';
         entries.forEach((entry, index) => addEntryToTable(entry, index));
+
+        clearForm();
+    });
+
+    // Color logic for cost cell
+    function getCostClass(entry) {
+        if (entry.isDocument) return '';
+        if (entry.type === 'Paycheck') return 'faint-green';
+        if (entry.type === 'Rental Lease') {
+            const costNum = parseFloat(entry.cost || '0');
+            return costNum < 0 ? 'faint-red' : 'faint-green';
+        }
+        // All other subscriptions are expenses
+        return 'faint-red';
+    }
+
+    function addEntryToTable(entry, index) {
+        const row = document.createElement('tr');
+        const costDisplay = entry.cost && entry.currency ? `${currencySymbols[entry.currency] || entry.currency} ${entry.cost}` : '';
+        const costClass = getCostClass(entry);
+
+        row.innerHTML = `
+            <td>${entry.type}</td>
+            <td>${entry.description}</td>
+            <td class="${costClass}">${costDisplay}</td>
+            <td>${entry.frequency}</td>
+            <td>${entry.startDate}</td>
+            <td>${entry.endDate}</td>
+            <td>
+                <button class="edit-button button text-sm px-2 py-1 mr-2" data-index="${index}" title="Edit">
+                    <!-- Pencil SVG -->
+                    <svg xmlns="http://www.w3.org/2000/svg" class="inline w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M9 13l6-6m2 2l-6 6m-2 2h6" />
+                    </svg>
+                </button>
+                <button class="delete-button button text-sm px-2 py-1" data-index="${index}" title="Delete">
+                    <!-- Cross SVG -->
+                    <svg xmlns="http://www.w3.org/2000/svg" class="inline w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </td>
+        `;
+        entriesTbody.appendChild(row);
+
+        // Add event listeners for edit and delete buttons
+        row.querySelector('.edit-button').addEventListener('click', () => {
+            clearErrors();
+            const entry = entries[index];
+            docTypeSelect.value = entry.type;
+            descriptionInput.value = entry.description;
+            costInput.value = entry.cost;
+            currencySelect.value = entry.currency || 'USD';
+            frequencySelect.value = entry.frequency;
+            startDateInput.value = entry.startDate;
+            endDateInput.value = entry.endDate;
+            const transactionRadio = Array.from(transactionRadios).find(r => r.value === entry.transactionType);
+            if (transactionRadio) transactionRadio.checked = true;
+
+            // Handle custom types
+            if (!Array.from(docTypeSelect.options).some(option => option.value === entry.type)) {
+                docTypeSelect.value = 'Other';
+                otherTypeInput.value = entry.type;
+                const radio = Array.from(typeRadios).find(r => r.value === (entry.isDocument ? 'document' : 'subscription'));
+                if (radio) radio.checked = true;
+            } else {
+                docTypeSelect.value = entry.type;
+            }
+
+            updateFormFields();
+            addEntryBtn.textContent = 'Update Entry';
+            addEntryBtn.dataset.index = index;
+        });
+
+        row.querySelector('.delete-button').addEventListener('click', () => {
+            if (confirm('Are you sure you want to delete this entry?')) {
+                entries.splice(index, 1);
+                saveEntries();
+                entriesTbody.innerHTML = '';
+                entries.forEach((entry, i) => addEntryToTable(entry, i));
+            }
+        });
+    }
+
+    // Initial render
+    entriesTbody.innerHTML = '';
+    entries.forEach((entry, index) => addEntryToTable(entry, index));
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'937c54801a8d6748',t:'MTc0NTkwMzgxNS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
 </html>
