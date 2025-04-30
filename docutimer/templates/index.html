@@ -1,0 +1,303 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DocuTimer: Work in Progress</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background: linear-gradient(to bottom right, #1e3a8a, #3b82f6);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        .progress-bar {
+            background: linear-gradient(to right, #4ade80, #22c55e);
+        }
+        .header-image {
+            max-width: 600px;
+            width: 100%;
+            height: auto;
+            margin: 0 auto;
+            display: block;
+        }
+        .auth-form {
+            background-color: #1f2937;
+            padding: 1.5rem;
+            border-radius: 0.375rem;
+            margin-top: 1rem;
+        }
+        .auth-input {
+            background-color: #374151;
+            border: 1px solid #4b5563;
+            color: white;
+            padding: 0.5rem;
+            border-radius: 0.375rem;
+            width: 100%;
+            margin-bottom: 1rem;
+            outline: none;
+        }
+        .auth-input:focus {
+            border-color: #22c55e;
+        }
+        .auth-button {
+            background-color: #22c55e;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            width: 100%;
+        }
+        .auth-button:hover {
+            background-color: #16a34a;
+        }
+    </style>
+</head>
+<body class="text-white font-sans">
+    <!-- Header -->
+    <header class="p-6">
+        <h1 class="text-4xl font-bold text-center">DocuTimer</h1>
+        <p class="text-lg text-center mt-2">Track Document Expirations & Subscription Renewals</p>
+        <img src="/static/image.jpg" alt="DocuTimer Header Image" class="header-image mt-4">
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex flex-col items-center justify-center flex-grow px-4">
+        <div class="text-center max-w-2xl">
+            <h2 class="text-3xl font-semibold mb-4">Coming Soon!</h2>
+            <p class="text-lg mb-6">
+                <span class="font-bold">DocuTimer</span> is in the works! Effortlessly manage document expiration dates and subscription renewals with timely reminders to keep you organized and stress-free.
+            </p>
+            <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+                <h3 class="text-xl font-medium mb-4">Estimated Launch</h3>
+                <div id="countdown" class="text-2xl font-mono mb-4">Calculating...</div>
+                <div class="w-full bg-gray-600 rounded-full h-4">
+                    <div id="progress-bar" class="progress-bar h-4 rounded-full" style="width: 0%"></div>
+                </div>
+            </div>
+            <p class="mt-6 text-lg">Want updates on our launch? Join our list!</p>
+            <div class="mt-4 flex justify-center">
+                <input type="email" id="email-input" placeholder="Enter your email" class="p-2 rounded-l-md text-black focus:outline-none">
+                <button id="subscribe-btn" class="bg-green-500 hover:bg-green-600 p-2 rounded-r-md pulse">Notify Me</button>
+            </div>
+            <p id="subscribe-message" class="mt-2 text-sm"></p>
+            <p class="mt-6 text-lg">
+                <a href="/tracker" class="underline hover:text-green-400">Try our Tracker (Beta)</a>
+            </p>
+            <div id="auth-section" class="auth-form hidden">
+                <h3 class="text-xl font-medium mb-4">Login / Register</h3>
+                <input type="email" id="auth-email" placeholder="Email" class="auth-input">
+                <input type="password" id="auth-password" placeholder="Password" class="auth-input">
+                <button id="login-btn" class="auth-button mb-2">Login</button>
+                <button id="register-btn" class="auth-button">Register</button>
+                <p id="auth-message" class="mt-2 text-sm"></p>
+            </div>
+            <div id="logout-section" class="mt-4 hidden">
+                <button id="logout-btn" class="bg-red-500 hover:bg-red-600 p-2 rounded-md">Logout</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="p-6 text-center">
+        <p>© 2025 DocuTimer. All rights reserved.</p>
+        <p class="mt-2">
+            <a href="https://github.com/ThinkCode/docutimer" target="_blank" class="underline hover:text-green-400">View on GitHub</a>
+        </p>
+    </footer>
+
+    <!-- JavaScript -->
+    <script>
+        // Countdown Timer
+        const launchDate = new Date('2025-05-31T23:59:59');
+        const countdownElement = document.getElementById('countdown');
+        const progressBar = document.getElementById('progress-bar');
+        const startDate = new Date('2025-04-27');
+        const totalDays = (launchDate - startDate) / (1000 * 60 * 60 * 24);
+
+        function updateCountdown() {
+            const now = new Date();
+            const timeLeft = launchDate - now;
+            if (timeLeft <= 0) {
+                countdownElement.textContent = 'Launched!';
+                progressBar.style.width = '100%';
+                return;
+            }
+
+            const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+
+            countdownElement.textContent = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+
+            const daysPassed = (now - startDate) / (1000 * 60 * 60 * 24);
+            const progress = Math.min((daysPassed / totalDays) * 100, 100);
+            progressBar.style.width = `${progress}%`;
+        }
+
+        setInterval(updateCountdown, 1000);
+        updateCountdown();
+
+        // Authentication
+        const authSection = document.getElementById('auth-section');
+        const logoutSection = document.getElementById('logout-section');
+        const loginBtn = document.getElementById('login-btn');
+        const registerBtn = document.getElementById('register-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+        const authEmail = document.getElementById('auth-email');
+        const authPassword = document.getElementById('auth-password');
+        const authMessage = document.getElementById('auth-message');
+
+        function updateAuthUI() {
+            const token = localStorage.getItem('access_token');
+            if (token) {
+                authSection.classList.add('hidden');
+                logoutSection.classList.remove('hidden');
+            } else {
+                authSection.classList.remove('hidden');
+                logoutSection.classList.add('hidden');
+            }
+        }
+
+        loginBtn.addEventListener('click', async () => {
+            const email = authEmail.value.trim();
+            const password = authPassword.value.trim();
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    localStorage.setItem('access_token', data.access_token);
+                    authMessage.textContent = data.message;
+                    authMessage.classList.add('text-green-400');
+                    authEmail.value = '';
+                    authPassword.value = '';
+                    updateAuthUI();
+                } else {
+                    authMessage.textContent = data.message;
+                    authMessage.classList.add('text-red-400');
+                }
+            } catch (error) {
+                authMessage.textContent = 'An error occurred';
+                authMessage.classList.add('text-red-400');
+            }
+            setTimeout(() => {
+                authMessage.textContent = '';
+                authMessage.classList.remove('text-green-400', 'text-red-400');
+            }, 3000);
+        });
+
+        registerBtn.addEventListener('click', async () => {
+            const email = authEmail.value.trim();
+            const password = authPassword.value.trim();
+            try {
+                const response = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    localStorage.setItem('access_token', data.access_token);
+                    authMessage.textContent = data.message;
+                    authMessage.classList.add('text-green-400');
+                    authEmail.value = '';
+                    authPassword.value = '';
+                    updateAuthUI();
+                } else {
+                    authMessage.textContent = data.message;
+                    authMessage.classList.add('text-red-400');
+                }
+            } catch (error) {
+                authMessage.textContent = 'An error occurred';
+                authMessage.classList.add('text-red-400');
+            }
+            setTimeout(() => {
+                authMessage.textContent = '';
+                authMessage.classList.remove('text-green-400', 'text-red-400');
+            }, 3000);
+        });
+
+        logoutBtn.addEventListener('click', () => {
+            localStorage.removeItem('access_token');
+            updateAuthUI();
+            window.location.href = '/';
+        });
+
+        updateAuthUI();
+
+        // Subscription Button (unchanged)
+        const subscribeBtn = document.getElementById('subscribe-btn');
+        const emailInput = document.getElementById('email-input');
+        const subscribeMessage = document.getElementById('subscribe-message');
+
+        subscribeBtn.addEventListener('click', () => {
+            const email = emailInput.value.trim();
+            if (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                subscribeMessage.textContent = 'Thanks for signing up! We’ll keep you posted.';
+                subscribeMessage.classList.add('text-green-400');
+                emailInput.value = '';
+            } else {
+                subscribeMessage.textContent = 'Please enter a valid email address.';
+                subscribeMessage.classList.add('text-red-400');
+            }
+            setTimeout(() => {
+                subscribeMessage.textContent = '';
+                subscribeMessage.classList.remove('text-green-400', 'text-red-400');
+            }, 3000);
+        });
+    </script>
+</body>
+</html>

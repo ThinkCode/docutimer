@@ -1,0 +1,762 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DocuTimer: Tracker (Beta)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+    body {
+        background: linear-gradient(to bottom right, #1e3a8a, #3b82f6);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+    .input, .select {
+        background-color: #1f2937;
+        border: 1px solid #4b5563;
+        color: white;
+        padding: 0.5rem 0.75rem;
+        border-radius: 0.375rem;
+        width: 100%;
+        outline: none;
+        transition: border-color 0.2s;
+    }
+    .input:focus, .select:focus {
+        border-color: #22c55e;
+        box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.2);
+    }
+    .input::placeholder {
+        color: #9ca3af;
+    }
+    .label {
+        color: #e5e7eb;
+        font-size: 0.875rem;
+        font-weight: 500;
+        margin-bottom: 0.25rem;
+        display: block;
+    }
+    .button {
+        background-color: #22c55e;
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 0.375rem;
+        font-weight: 500;
+        transition: background-color 0.2s;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .button:hover {
+        background-color: #16a34a;
+    }
+    .edit-button {
+        background-color: #3b82f6;
+    }
+    .edit-button:hover {
+        background-color: #2563eb;
+    }
+    .delete-button {
+        background-color: #ef4444;
+    }
+    .delete-button:hover {
+        background-color: #dc2626;
+    }
+    .radio-group {
+        display: flex;
+        gap: 1rem;
+    }
+    .radio-label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #e5e7eb;
+    }
+    .radio {
+        accent-color: #22c55e;
+    }
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+        background-color: #1f2937;
+        border-radius: 0.375rem;
+        overflow: hidden;
+    }
+    .table th, .table td {
+        padding: 0.75rem;
+        text-align: left;
+        border-bottom: 1px solid #4b5563;
+    }
+    .table th {
+        background-color: #374151;
+        color: #e5e7eb;
+        font-weight: 600;
+        cursor: pointer;
+        user-select: none;
+    }
+    .table th.sort-asc::after {
+        content: " ▲";
+        font-size: 0.8em;
+    }
+    .table th.sort-desc::after {
+        content: " ▼";
+        font-size: 0.8em;
+    }
+    .table td {
+        color: #d1d5db;
+    }
+    .expense {
+        color: rgba(239, 68, 68, 0.7);
+    }
+    .earning {
+        color: rgba(34, 197, 94, 0.7);
+    }
+    .error {
+        border-color: #ef4444 !important;
+        box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2) !important;
+    }
+    .currency-container {
+        display: flex;
+        gap: 0.5rem;
+    }
+    .currency-select {
+        width: 100px;
+        max-width: 100px;
+    }
+    .select, .currency-select {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        width: 100%;
+        max-width: 100%;
+    }
+    .currency-container .currency-select {
+        width: 100px;
+        max-width: 100px;
+    }
+    .form-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    .form-row {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    .form-row.md-row {
+        flex-direction: row;
+        gap: 1rem;
+    }
+    @media (min-width: 768px) {
+        .form-row.md-row > * {
+            flex: 1;
+        }
+    }
+    .auth-message {
+        margin-top: 1rem;
+        text-align: center;
+    }
+    </style>
+</head>
+<body class="text-white font-sans">
+    <!-- Header -->
+    <header class="p-6">
+        <h1 class="text-4xl font-bold text-center">DocuTimer</h1>
+        <p class="text-lg text-center mt-2">Tracker (Beta)</p>
+        <p class="text-center mt-2">
+            <a href="/" class="underline hover:text-green-400">Back to Home</a>
+        </p>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex flex-col items-center justify-center flex-grow px-4">
+        <div id="auth-message" class="auth-message hidden">
+            <p>Please <a href="#" id="login-link" class="underline hover:text-green-400">login</a> to manage your entries.</p>
+        </div>
+        <!-- Tracking Form Section -->
+        <section class="w-full max-w-4xl" id="tracker-section">
+            <h2 class="text-2xl font-semibold text-center mb-6">Track Your Documents & Subscriptions</h2>
+            <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+                <div class="form-grid">
+                    <div class="form-row md-row">
+                        <div>
+                            <label for="doc-type" class="label">Document/Subscription</label>
+                            <select id="doc-type" class="select">
+                                <option value="Passport" data-type="document">Passport</option>
+                                <option value="Drivers License" data-type="document">Drivers License</option>
+                                <option value="Tesla Insurance" data-type="subscription">Tesla Insurance</option>
+                                <option value="Tesla Lease" data-type="subscription">Tesla Lease</option>
+                                <option value="Tesla Premium" data-type="subscription">Tesla Premium</option>
+                                <option value="Tesla FSD" data-type="subscription">Tesla FSD</option>
+                                <option value="Apple iCloud" data-type="subscription">Apple iCloud</option>
+                                <option value="Google Drive" data-type="subscription">Google Drive</option>
+                                <option value="Blinkist" data-type="subscription">Blinkist</option>
+                                <option value="Adobe Creative Cloud LR PS" data-type="subscription">Adobe Creative Cloud LR PS</option>
+                                <option value="Amex Annual Fee" data-type="subscription">Amex Annual Fee</option>
+                                <option value="Alaska" data-type="subscription">Alaska</option>
+                                <option value="VentureX" data-type="subscription">VentureX</option>
+                                <option value="Netflix" data-type="subscription">Netflix</option>
+                                <option value="Prime" data-type="subscription">Prime</option>
+                                <option value="Aha" data-type="subscription">Aha</option>
+                                <option value="YouTube Premium" data-type="subscription">YouTube Premium</option>
+                                <option value="Coursera" data-type="subscription">Coursera</option>
+                                <option value="LinkedIn Premium" data-type="subscription">LinkedIn Premium</option>
+                                <option value="Apple
+
+ Fitness Plus" data-type="subscription">Apple Fitness Plus</option>
+                                <option value="Xbox Gamepass" data-type="subscription">Xbox Gamepass</option>
+                                <option value="Whoop" data-type="subscription">Whoop</option>
+                                <option value="Rental Lease" data-type="subscription">Rental Lease</option>
+                                <option value="Paycheck" data-type="subscription">Paycheck</option>
+                                <option value="Other" data-type="other">Other</option>
+                            </select>
+                        </div>
+                        <div id="other-type-container" class="hidden">
+                            <label for="other-type" class="label">Custom Type</label>
+                            <input type="text" id="other-type" placeholder="Enter custom type" class="input">
+                            <div class="mt-2">
+                                <label class="label">Type</label>
+                                <div class="radio-group">
+                                    <label class="radio-label"><input type="radio" name="type-selection" value="document" class="radio"> Document</label>
+                                    <label class="radio-label"><input type="radio" name="type-selection" value="subscription" class="radio"> Subscription</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div id="description-field">
+                            <label for="description" class="label">Description</label>
+                            <input type="text" id="description" placeholder="e.g., India, Oregon" class="input">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div>
+                            <label class="label">Transaction Type</label>
+                            <div class="radio-group">
+                                <label class="radio-label"><input type="radio" name="transaction-type" value="expense" class="radio" checked> Expense (Outgoing)</label>
+                                <label class="radio-label"><input type="radio" name="transaction-type" value="earning" class="radio"> Earning (Incoming)</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-row md-row">
+                        <div id="cost-field" class="hidden">
+                            <label for="cost" class="label">Cost</label>
+                            <div class="currency-container">
+                                <select id="currency" class="select currency-select"></select>
+                                <input type="text" id="cost" placeholder="e.g., 7" class="input">
+                            </div>
+                        </div>
+                        <div id="frequency-field" class="hidden">
+                            <label for="frequency" class="label">Monthly/Yearly</label>
+                            <select id="frequency" class="select">
+                                <option value="">-- Select --</option>
+                                <option value="Monthly">Monthly</option>
+                                <option value="Yearly">Yearly</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row md-row">
+                        <div id="start-date-field">
+                            <label for="start-date" class="label">Issued  Issued/Start Date</label>
+                            <input type="date" id="start-date" class="input">
+                        </div>
+                        <div id="end-date-field">
+                            <label for="end-date" class="label">Renewal/Expiration Date</label>
+                            <input type="date" id="end-date" class="input">
+                        </div>
+                    </div>
+                </div>
+                <button id="add-entry-btn" class="mt-6 w-full button">Add Entry</button>
+            </div>
+
+            <!-- Table to Display Entries -->
+            <div class="mt-8">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th data-key="type">Document/Subscription</th>
+                            <th data-key="description">Description</th>
+                            <th data-key="cost">Cost</th>
+                            <th data-key="frequency">Frequency</th>
+                            <th data-key="startDate">Start Date</th>
+                            <th data-key="endDate">Expiration Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="entries-tbody"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="p-6 text-center">
+        <p>© 2025 DocuTimer. All rights reserved.</p>
+        <p class="mt-2">
+            <a href="https://github.com/ThinkCode/docutimer" target="_blank" class="underline hover:text-green-400">View on GitHub</a>
+        </p>
+    </footer>
+
+    <!-- JavaScript -->
+    <script>
+    // Tracking Form
+    const docTypeSelect = document.getElementById('doc-type');
+    const otherTypeContainer = document.getElementById('other-type-container');
+    const otherTypeInput = document.getElementById('other-type');
+    const typeRadios = document.getElementsByName('type-selection');
+    const transactionRadios = document.getElementsByName('transaction-type');
+    const descriptionField = document.getElementById('description-field');
+    const costField = document.getElementById('cost-field');
+    const frequencyField = document.getElementById('frequency-field');
+    const startDateField = document.getElementById('start-date-field');
+    const endDateField = document.getElementById('end-date-field');
+    const addEntryBtn = document.getElementById('add-entry-btn');
+    const entriesTbody = document.getElementById('entries-tbody');
+    const currencySelect = document.getElementById('currency');
+    const trackerSection = document.getElementById('tracker-section');
+    const authMessage = document.getElementById('auth-message');
+    const loginLink = document.getElementById('login-link');
+
+    // Input elements for validation
+    const descriptionInput = document.getElementById('description');
+    const costInput = document.getElementById('cost');
+    const frequencySelect = document.getElementById('frequency');
+    const startDateInput = document.getElementById('start-date');
+    const endDateInput = document.getElementById('end-date');
+
+    // Currency symbol mapping for common currencies
+    const currencySymbols = {
+        "USD": "$",
+        "EUR": "€",
+        "GBP": "£",
+        "JPY": "¥",
+        "AUD": "A$",
+        "CAD": "C$",
+        "CHF": "Fr",
+        "CNY": "¥",
+        "INR": "₹",
+        "BRL": "R$"
+    };
+
+    // Populate currency dropdown with only common currencies
+    Object.keys(currencySymbols).forEach(code => {
+        const option = document.createElement('option');
+        option.value = code;
+        option.textContent = code;
+        if (code === 'USD') option.selected = true;
+        currencySelect.appendChild(option);
+    });
+
+    // Sorting state
+    let sortKey = null;
+    let sortDir = 1; // 1 = asc, -1 = desc
+
+    // Check authentication status
+    function checkAuth() {
+        const token = localStorage.getItem('access_token');
+        if (!token) {
+            trackerSection.classList.add('hidden');
+            authMessage.classList.remove('hidden');
+        } else {
+            trackerSection.classList.remove('hidden');
+            authMessage.classList.add('hidden');
+            fetchEntries();
+        }
+    }
+
+    loginLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        window.location.href = '/';
+    });
+
+    // Fetch entries from backend
+    async function fetchEntries() {
+    const token = localStorage.getItem('access_token');
+    console.log('Fetching entries with token:', token);  // Debug log
+    try {
+        const response = await fetch('/api/entries', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        console.log('Response status:', response.status);  // Debug log
+        if (response.status === 401) {
+            console.log('Unauthorized - clearing token');  // Debug log
+            localStorage.removeItem('access_token');
+            checkAuth();
+            return;
+        }
+        if (!response.ok) {
+            const errorText = await response.text();  // Get raw response text
+            console.log('Error response:', errorText);  // Debug log
+            throw new Error(`Failed to fetch entries: ${response.status}`);
+        }
+        const entries = await response.json();
+        renderTable(entries);
+    } catch (error) {
+        console.error('Error fetching entries:', error);
+        alert('Failed to load entries. Please try logging in again.');
+        localStorage.removeItem('access_token');
+        checkAuth();
+    }
+}
+
+    // Show/hide fields based on selection
+    function updateFormFields() {
+        const selectedOption = docTypeSelect.options[docTypeSelect.selectedIndex];
+        const type = selectedOption.getAttribute('data-type');
+
+        // Reset visibility
+        otherTypeContainer.classList.add('hidden');
+        descriptionField.classList.remove('hidden');
+        costField.classList.add('hidden');
+        frequencyField.classList.add('hidden');
+        startDateField.classList.remove('hidden');
+        endDateField.classList.remove('hidden');
+
+        if (type === 'other') {
+            otherTypeContainer.classList.remove('hidden');
+            typeRadios.forEach(radio => {
+                radio.addEventListener('change', () => {
+                    const selectedType = document.querySelector('input[name="type-selection"]:checked')?.value;
+                    if (selectedType === 'document') {
+                        costField.classList.add('hidden');
+                        frequencyField.classList.add('hidden');
+                    } else if (selectedType === 'subscription') {
+                        costField.classList.remove('hidden');
+                        frequencyField.classList.remove('hidden');
+                    }
+                });
+            });
+        } else if (type === 'document') {
+            costField.classList.add('hidden');
+            frequencyField.classList.add('hidden');
+        } else if (type === 'subscription') {
+            costField.classList.remove('hidden');
+            frequencyField.classList.remove('hidden');
+        }
+    }
+
+    // Clear error states
+    function clearErrors() {
+        [descriptionInput, costInput, frequencySelect, startDateInput, endDateInput, otherTypeInput].forEach(input => {
+            if (input) input.classList.remove('error');
+        });
+    }
+
+    // Clear form and reset button
+    function clearForm() {
+        docTypeSelect.value = 'Passport';
+        otherTypeInput.value = '';
+        typeRadios.forEach(radio => radio.checked = false);
+        transactionRadios.forEach(radio => radio.checked = radio.value === 'expense');
+        descriptionInput.value = '';
+        costInput.value = '';
+        currencySelect.value = 'USD';
+        frequencySelect.value = '';
+        startDateInput.value = '';
+        endDateInput.value = '';
+        addEntryBtn.textContent = 'Add Entry';
+        addEntryBtn.dataset.id = '';
+        clearErrors();
+        updateFormFields();
+    }
+
+    docTypeSelect.addEventListener('change', updateFormFields);
+    updateFormFields();
+
+    // Add or update entry
+addEntryBtn.addEventListener('click', async () => {
+    clearErrors();
+
+    const selectedOption = docTypeSelect.options[docTypeSelect.selectedIndex];
+    const type = selectedOption.getAttribute('data-type');
+    let docType = docTypeSelect.value;
+    let isDocument = type === 'document';
+
+    if (type === 'other') {
+        docType = otherTypeInput.value.trim();
+        const selectedType = document.querySelector('input[name="type-selection"]:checked')?.value;
+        if (!docType || !selectedType) {
+            alert('Please specify the custom type and select whether it is a Document or Subscription.');
+            otherTypeInput.classList.add('error');
+            return;
+        }
+        isDocument = selectedType === 'document';
+    } else if (type === 'subscription') {
+        isDocument = false;
+    }
+
+    const description = descriptionInput.value.trim();
+    let cost = costInput.value.trim();
+    const currency = currencySelect.value;
+    const frequency = frequencySelect.value;
+    const startDate = startDateInput.value;
+    const endDate = endDateInput.value;
+    const transactionType = document.querySelector('input[name="transaction-type"]:checked')?.value;
+
+    // Strip currency symbols from cost
+    if (cost) {
+        cost = cost.replace(/[$€£¥₹₽₿₪₫₴₸₺₽₲₵₣₤₥₦₧₨₩₮₯₰₱₳₴₵₷₸₹₺₻₼₽₾₿]/g, '').trim();
+    }
+
+    // Client-side validation
+    let hasError = false;
+
+    if (!startDate) {
+        startDateInput.classList.add('error');
+        hasError = true;
+    }
+    if (!endDate) {
+        endDateInput.classList.add('error');
+        hasError = true;
+    }
+    if (startDate && endDate) {
+        const startDateObj = new Date(startDate);
+        const endDateObj = new Date(endDate);
+        if (startDateObj >= endDateObj) {
+            startDateInput.classList.add('error');
+            endDateInput.classList.add('error');
+            hasError = true;
+        }
+    }
+    if (isDocument && !description) {
+        descriptionInput.classList.add('error');
+        hasError = true;
+    }
+    if (!isDocument) {
+        if (!cost || isNaN(parseFloat(cost))) {
+            costInput.classList.add('error');
+            hasError = true;
+        }
+        if (!frequency) {
+            frequencySelect.classList.add('error');
+            hasError = true;
+        }
+    }
+    if (!transactionType) {
+        alert('Please select whether this is an Expense or Earning.');
+        hasError = true;
+    }
+
+    if (hasError) {
+        alert('Please correct the highlighted fields.');
+        return;
+    }
+
+    // Round cost to nearest whole number
+    let roundedCost = isDocument ? '' : (cost ? Math.round(parseFloat(cost)).toString() : '');
+
+    const entry = {
+        type: docType,
+        description: description || '',
+        cost: roundedCost,
+        currency: isDocument ? '' : currency,
+        frequency: isDocument ? '' : frequency,
+        startDate: startDate,
+        endDate: endDate,
+        isDocument: isDocument,
+        transactionType: transactionType
+    };
+
+    const token = localStorage.getItem('access_token');
+    try {
+    const isUpdate = addEntryBtn.dataset.id;
+    const url = isUpdate ? `/api/entries/${addEntryBtn.dataset.id}` : '/api/entries';
+    const method = isUpdate ? 'PUT' : 'POST';
+    const response = await fetch(url, {
+        method,
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(entry)
+    });
+    const data = await response.json();
+    if (response.ok) {
+        alert(data.message || 'Entry saved successfully');
+        fetchEntries();
+        clearForm();
+    } else {
+        const errorMessage = data.message || 'An error occurred while saving the entry';
+        alert(errorMessage);
+        if (errorMessage.includes('Description')) {
+            descriptionInput.classList.add('error');
+        } else if (errorMessage.includes('Start date') || errorMessage.includes('date format')) {
+            startDateInput.classList.add('error');
+            endDateInput.classList.add('error');
+        }
+    }
+} catch (error) {
+    console.error('Error saving entry:', error);
+    console.log('Request payload:', JSON.stringify(entry));  // Debug log
+    console.log('Token:', token);  // Debug log
+    alert(`An error occurred while saving the entry: ${error.message}. Please try again.`);
+}
+});
+
+    function addEntryToTable(entry) {
+        const row = document.createElement('tr');
+        const costDisplay = entry.cost && entry.currency ? `${currencySymbols[entry.currency] || entry.currency} ${entry.cost}` : '';
+        const costClass = entry.transactionType === 'expense' ? 'expense' : 'earning';
+        row.innerHTML = `
+            <td>${entry.type}</td>
+            <td>${entry.description}</td>
+            <td class="${costClass}">${costDisplay}</td>
+            <td>${entry.frequency}</td>
+            <td>${entry.startDate}</td>
+            <td>${entry.endDate}</td>
+            <td>
+                <button class="edit-button button text-sm px-2 py-1 mr-2" data-id="${entry.id}" title="Edit">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="inline w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M9 13l6-6m2 2l-6 6m-2 2h6" />
+                    </svg>
+                </button>
+                <button class="delete-button button text-sm px-2 py-1" data-id="${entry.id}" title="Delete">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="inline w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </td>
+        `;
+        entriesTbody.appendChild(row);
+
+        // Add event listeners for edit and delete buttons
+        row.querySelector('.edit-button').addEventListener('click', () => {
+            clearErrors();
+            docTypeSelect.value = entry.type;
+            descriptionInput.value = entry.description;
+            costInput.value = entry.cost;
+            currencySelect.value = entry.currency || 'USD';
+            frequencySelect.value = entry.frequency;
+            startDateInput.value = entry.startDate;
+            endDateInput.value = entry.endDate;
+            const transactionRadio = Array.from(transactionRadios).find(r => r.value === entry.transactionType);
+            if (transactionRadio) transactionRadio.checked = true;
+
+            // Handle custom types
+            if (!Array.from(docTypeSelect.options).some(option => option.value === entry.type)) {
+                docTypeSelect.value = 'Other';
+                otherTypeInput.value = entry.type;
+                const radio = Array.from(typeRadios).find(r => r.value === (entry.isDocument ? 'document' : 'subscription'));
+                if (radio) radio.checked = true;
+            } else {
+                docTypeSelect.value = entry.type;
+            }
+
+            updateFormFields();
+            addEntryBtn.textContent = 'Update Entry';
+            addEntryBtn.dataset.id = entry.id;
+        });
+
+        row.querySelector('.delete-button').addEventListener('click', async () => {
+            if (confirm('Are you sure you want to delete this entry?')) {
+                const token = localStorage.getItem('access_token');
+                try {
+                    const response = await fetch(`/api/entries/${entry.id}`, {
+                        method: 'DELETE',
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    const data = await response.json();
+                    if (response.ok) {
+                        alert(data.message);
+                        fetchEntries();
+                    } else {
+                        alert(data.message);
+                    }
+                } catch (error) {
+                    console.error('Error deleting entry:', error);
+                    alert('An error occurred while deleting the entry.');
+                }
+            }
+        });
+    }
+
+    // Sorting logic
+    function renderTable(entries) {
+        // Sort if needed
+        let sortedEntries = [...entries];
+        if (sortKey) {
+            sortedEntries.sort((a, b) => {
+                let aVal = a[sortKey] || '';
+                let bVal = b[sortKey] || '';
+                // For cost, sort numerically
+                if (sortKey === 'cost') {
+                    aVal = parseFloat(aVal) || 0;
+                    bVal = parseFloat(bVal) || 0;
+                }
+                // For dates, sort as dates
+                if (sortKey === 'startDate' || sortKey === 'endDate') {
+                    aVal = aVal ? new Date(aVal) : new Date(0);
+                    bVal = bVal ? new Date(bVal) : new Date(0);
+                }
+                if (aVal < bVal) return -1 * sortDir;
+                if (aVal > bVal) return 1 * sortDir;
+                return 0;
+            });
+        }
+        entriesTbody.innerHTML = '';
+        sortedEntries.forEach(entry => addEntryToTable(entry));
+    }
+
+    // Add sorting event listeners
+    document.querySelectorAll('.table th[data-key]').forEach(th => {
+        th.addEventListener('click', function() {
+            const key = th.getAttribute('data-key');
+            if (sortKey === key) {
+                sortDir *= -1;
+            } else {
+                sortKey = key;
+                sortDir = 1;
+            }
+            // Remove sort classes
+            document.querySelectorAll('.table th').forEach(h => h.classList.remove('sort-asc', 'sort-desc'));
+            th.classList.add(sortDir === 1 ? 'sort-asc' : 'sort-desc');
+            fetchEntries();
+        });
+    });
+
+    // Initial check
+    checkAuth();
+    </script>
+</body>
+</html>

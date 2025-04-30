@@ -1,0 +1,10 @@
+docutimer/
+├── app.py                  # Flask application
+├── templates/
+│   ├── index.html         # Updated index.html
+│   └── tracker.html       # Updated tracker.html
+├── static/
+│   └── image.jpg          # Static assets (e.g., header image)
+├── requirements.txt       # Python dependencies
+└── instance/
+    └── docutimer.db       # SQLite database
