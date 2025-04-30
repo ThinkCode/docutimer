@@ -123,12 +123,11 @@ def login():
 @app.route('/api/entries', methods=['GET', 'POST'])
 @jwt_required()
 def handle_entries():
-    # get_jwt_identity() returns a string, convert it to int
     user_id = int(get_jwt_identity())
-    print(f"GET /api/entries - User ID: {user_id}")  # Debug log
+    print(f"GET /api/entries - User ID: {user_id}")
     if request.method == 'GET':
         entries = Entry.query.filter_by(user_id=user_id).all()
-        print(f"Found {len(entries)} entries for user {user_id}")  # Debug log
+        print(f"Found {len(entries)} entries for user {user_id}")
         return jsonify([{
             'id': e.id,
             'type': e.type,
@@ -144,7 +143,7 @@ def handle_entries():
     elif request.method == 'POST':
         try:
             data = request.get_json()
-            print("Received POST data:", data)  # Debug log
+            print("Received POST data:", data)
             required_fields = ['type', 'startDate', 'endDate', 'isDocument', 'transactionType']
             
             # Check for missing required fields
@@ -159,7 +158,7 @@ def handle_entries():
                 if start_date >= end_date:
                     return jsonify({'message': 'Start date must be before end date'}), 422
             except ValueError as e:
-                print("Date validation error:", str(e))  # Debug log
+                print("Date validation error:", str(e))
                 return jsonify({'message': 'Invalid date format, expected YYYY-MM-DD'}), 422
 
             # Validate cost and frequency only for subscriptions
@@ -174,7 +173,6 @@ def handle_entries():
                 except ValueError:
                     return jsonify({'message': 'Cost must be a valid number'}), 422
             else:
-                # For documents, ensure cost and frequency are empty
                 cost = ''
                 frequency = ''
                 currency = ''
@@ -184,13 +182,17 @@ def handle_entries():
             if data['isDocument'] and not description:
                 return jsonify({'message': 'Description is required for documents'}), 422
 
-            # Check for duplicates
-            existing = Entry.query.filter_by(
-                user_id=user_id,
-                type=data['type'],
-                description=description,
-                start_date=data['startDate'],
-                end_date=data['endDate']
+            # Normalize type and description for duplicate check
+            normalized_type = data['type'].lower()
+            normalized_description = description.lower()
+
+            # Check for duplicates (case-insensitive)
+            existing = Entry.query.filter(
+                Entry.user_id == user_id,
+                db.func.lower(Entry.type) == normalized_type,
+                db.func.lower(Entry.description) == normalized_description,
+                Entry.start_date == data['startDate'],
+                Entry.end_date == data['endDate']
             ).first()
             if existing:
                 return jsonify({'message': 'Duplicate entry exists'}), 422
@@ -206,7 +208,7 @@ def handle_entries():
                 'end_date': data['endDate'],
                 'is_document': data['isDocument'],
                 'transaction_type': data['transactionType']
-            })  # Debug log
+            })
 
             entry = Entry(
                 user_id=user_id,
@@ -224,7 +226,7 @@ def handle_entries():
             db.session.commit()
             return jsonify({'message': 'Entry added', 'id': entry.id}), 201
         except Exception as e:
-            print("Error in /api/entries POST:", str(e))  # Debug log
+            print("Error in /api/entries POST:", str(e))
             return jsonify({'message': f'Server error: {str(e)}'}), 500
             
 @app.errorhandler(Exception)
@@ -235,7 +237,6 @@ def handle_exception(e):
 @app.route('/api/entries/<int:id>', methods=['PUT', 'DELETE'])
 @jwt_required()
 def handle_entry(id):
-    # Convert user_id to int
     user_id = int(get_jwt_identity())
     entry = Entry.query.filter_by(id=id, user_id=user_id).first()
     if not entry:
@@ -265,12 +266,17 @@ def handle_entry(id):
             except ValueError:
                 return jsonify({'message': 'Invalid cost format'}), 400
 
-        # Check for duplicates (excluding current entry)
+        # Normalize type and description for duplicate check
+        description = data.get('description', '').strip()
+        normalized_type = data['type'].lower()
+        normalized_description = description.lower()
+
+        # Check for duplicates (case-insensitive, excluding current entry)
         existing = Entry.query.filter(
             Entry.id != id,
             Entry.user_id == user_id,
-            Entry.type == data['type'],
-            Entry.description == data.get('description', ''),
+            db.func.lower(Entry.type) == normalized_type,
+            db.func.lower(Entry.description) == normalized_description,
             Entry.start_date == data['startDate'],
             Entry.end_date == data['endDate']
         ).first()
@@ -278,7 +284,7 @@ def handle_entry(id):
             return jsonify({'message': 'Duplicate entry exists'}), 400
 
         entry.type = data['type']
-        entry.description = data.get('description', '')
+        entry.description = description
         entry.cost = data.get('cost', '')
         entry.currency = data.get('currency', '')
         entry.frequency = data.get('frequency', '')
