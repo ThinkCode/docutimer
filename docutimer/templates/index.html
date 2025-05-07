@@ -1,43 +1,4 @@
-<script type="text/javascript">
-        var gk_isXlsx = false;
-        var gk_xlsxFileLookup = {};
-        var gk_fileData = {};
-        function filledCell(cell) {
-          return cell !== '' && cell != null;
-        }
-        function loadFileData(filename) {
-        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
-            try {
-                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
-                var firstSheetName = workbook.SheetNames[0];
-                var worksheet = workbook.Sheets[firstSheetName];
-
-                // Convert sheet to JSON to filter blank rows
-                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
-                // Filter out blank rows (rows where all cells are empty, null, or undefined)
-                var filteredData = jsonData.filter(row => row.some(filledCell));
-
-                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
-                var headerRowIndex = filteredData.findIndex((row, index) =>
-                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
-                );
-                // Fallback
-                if (headerRowIndex === -1 || headerRowIndex > 25) {
-                  headerRowIndex = 0;
-                }
-
-                // Convert filtered JSON back to CSV
-                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
-                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
-                return csv;
-            } catch (e) {
-                console.error(e);
-                return "";
-            }
-        }
-        return gk_fileData[filename] || "";
-        }
-        </script><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -99,6 +60,30 @@
         .auth-button:hover {
             background-color: #16a34a;
         }
+        .dashboard-section {
+            background-color: #1f2937;
+            padding: 1.5rem;
+            border-radius: 0.375rem;
+            margin-top: 1rem;
+            width: 100%;
+            max-width: 600px;
+        }
+        .dashboard-section h3 {
+            color: #e5e7eb;
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        .dashboard-section p {
+            color: #d1d5db;
+            margin-bottom: 0.5rem;
+        }
+        .expense {
+            color: rgba(239, 68, 68, 0.7);
+        }
+        .earning {
+            color: rgba(34, 197, 94, 0.7);
+        }
     </style>
 </head>
 <body class="text-white font-sans">
@@ -142,6 +127,13 @@
             </div>
             <div id="logout-section" class="mt-4 hidden">
                 <button id="logout-btn" class="bg-red-500 hover:bg-red-600 p-2 rounded-md">Logout</button>
+            </div>
+            <div id="dashboard-section" class="dashboard-section hidden">
+                <h3>Financial Overview</h3>
+                <p>Expenses (Monthly): <span id="expenses-monthly" class="expense">Calculating...</span></p>
+                <p>Expenses (Yearly): <span id="expenses-yearly" class="expense">Calculating...</span></p>
+                <p>Income (Monthly): <span id="income-monthly" class="earning">Calculating...</span></p>
+                <p>Income (Yearly): <span id="income-yearly" class="earning">Calculating...</span></p>
             </div>
         </div>
     </main>
@@ -196,16 +188,79 @@
         const authEmail = document.getElementById('auth-email');
         const authPassword = document.getElementById('auth-password');
         const authMessage = document.getElementById('auth-message');
+        const dashboardSection = document.getElementById('dashboard-section');
+        const expensesMonthly = document.getElementById('expenses-monthly');
+        const expensesYearly = document.getElementById('expenses-yearly');
+        const incomeMonthly = document.getElementById('income-monthly');
+        const incomeYearly = document.getElementById('income-yearly');
 
         function updateAuthUI() {
             const token = localStorage.getItem('access_token');
             if (token) {
                 authSection.classList.add('hidden');
                 logoutSection.classList.remove('hidden');
+                dashboardSection.classList.remove('hidden');
+                fetchFinancialData();
             } else {
                 authSection.classList.remove('hidden');
                 logoutSection.classList.add('hidden');
+                dashboardSection.classList.add('hidden');
             }
+        }
+
+        async function fetchFinancialData() {
+            const token = localStorage.getItem('access_token');
+            try {
+                const response = await fetch('/api/entries', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.status === 401) {
+                    localStorage.removeItem('access_token');
+                    updateAuthUI();
+                    return;
+                }
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch entries: ${response.status}`);
+                }
+                const entries = await response.json();
+                calculateFinancials(entries);
+            } catch (error) {
+                console.error('Error fetching financial data:', error);
+                expensesMonthly.textContent = 'Error';
+                expensesYearly.textContent = 'Error';
+                incomeMonthly.textContent = 'Error';
+                incomeYearly.textContent = 'Error';
+            }
+        }
+
+        function calculateFinancials(entries) {
+            let totalExpensesMonthly = 0;
+            let totalIncomeMonthly = 0;
+
+            entries.forEach(entry => {
+                if (!entry.cost || entry.isDocument) return; // Skip documents and entries without cost
+
+                const cost = parseFloat(entry.cost);
+                if (isNaN(cost)) return;
+
+                const isMonthly = entry.frequency === 'Monthly';
+                const monthlyCost = isMonthly ? cost : cost / 12;
+
+                if (entry.transactionType === 'expense') {
+                    totalExpensesMonthly += monthlyCost;
+                } else if (entry.transactionType === 'earning') {
+                    totalIncomeMonthly += monthlyCost;
+                }
+            });
+
+            const totalExpensesYearly = totalExpensesMonthly * 12;
+            const totalIncomeYearly = totalIncomeMonthly * 12;
+
+            // Format the numbers with 2 decimal places and thousands separator
+            expensesMonthly.textContent = `$${totalExpensesMonthly.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,')}`;
+            expensesYearly.textContent = `$${totalExpensesYearly.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,')}`;
+            incomeMonthly.textContent = `$${totalIncomeMonthly.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,')}`;
+            incomeYearly.textContent = `$${totalIncomeYearly.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,')}`;
         }
 
         loginBtn.addEventListener('click', async () => {
@@ -219,6 +274,7 @@
                 });
                 const data = await response.json();
                 if (response.ok) {
+                    console.log('Login successful, token:', data.access_token);
                     localStorage.setItem('access_token', data.access_token);
                     authMessage.textContent = data.message;
                     authMessage.classList.add('text-green-400');
@@ -251,7 +307,7 @@
                 const data = await response.json();
                 if (response.ok) {
                     localStorage.setItem('access_token', data.access_token);
-                    authMessage.textContent = data.message;
+                    authMessage.textContent = évidence.message;
                     authMessage.classList.add('text-green-400');
                     authEmail.value = '';
                     authPassword.value = '';
